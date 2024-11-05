@@ -1,6 +1,10 @@
 
 # instaui
 
+> **⚠️ Notice:** This package is currently under development and is in **beta**. Features and functionality may change. Use it at your own risk, and feel free to contribute or report issues!
+
+
+
 `instaui` is a zero-code CRUD UI generator for React, allowing you to create fully functional CRUD interfaces from any REST API with minimal setup. By simply passing in an API client and configuration object, `instaui` dynamically renders all necessary CRUD components and actions, saving you from writing repetitive code.
 
 ## Features
@@ -28,7 +32,7 @@ To get started, import `instaui` and provide it with the required configuration 
 
 ### Basic Setup
 
-```typescript
+```tsx
 import React from 'react';
 import Instaui from 'instaui';
 import axios from 'axios';
@@ -87,17 +91,14 @@ const userConfig = {
 };
 
 function App() {
+	const validators = {
+			email: (v) => /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(v)
+				? [true, ""]
+				: [false, "Invalid email format"],
+			name: (v) => v.length >= 2 ? [true, ""] : [false, "Name too short"],
+		};
   return (
-    <Instaui
-      config={userConfig}
-      client={apiClient}
-      validators={{
-        email: (v) => /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(v)
-          ? [true, ""]
-          : [false, "Invalid email format"],
-        name: (v) => v.length >= 2 ? [true, ""] : [false, "Name too short"],
-      }}
-    />
+    <Instaui config={userConfig} client={apiClient} validators={validators}/>
   );
 }
 
@@ -106,11 +107,11 @@ export default App;
 
 ### Props
 
-| Prop         | Type        | Description                                                                                             |
-|--------------|-------------|---------------------------------------------------------------------------------------------------------|
-| `config`     | `object`    | Configuration object defining the entity, fields, validation, and relation details.                     |
-| `client`     | `AxiosInstance` | The axios instance for handling API calls, including authentication headers.                     |
-| `validators` | `object`    | Custom validation functions for fields. Validators should return `[true, ""]` or `[false, "Error"]`.    |
+| Prop         | Type            | Description                                                                                          |
+|--------------|-----------------|------------------------------------------------------------------------------------------------------|
+| `config`     | `object`        | Configuration object defining the entity, fields, validation, and relation details.                  |
+| `client`     | `AxiosInstance` | The axios instance for handling API calls, including authentication headers.                         |
+| `validators` | `object`        | Custom validation functions for fields. Validators should return `[true, ""]` or `[false, "Error"]`. |
 
 ### Example Config
 
@@ -170,8 +171,8 @@ The `config` prop defines the fields and behavior of each CRUD component. Here�
 
 Define custom validation functions in the `validators` prop. Each validator should return a tuple with a boolean and an error message:
 
-```typescript
-validators: {
+```tsx
+validators = {
   email: (value: string) => /^[\w-]+@([\w-]+\.)+[\w-]{2,4}$/.test(value)
     ? [true, ""]
     : [false, "Invalid email format"],
