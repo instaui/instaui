@@ -1,6 +1,6 @@
 {
   "name": "instaui",
-  "version": "0.0.1",
+  "version": "0.0.7",
   "description": "`instaui` is a zero-code CRUD UI generator for React, designed to create a full-featured CRUD interface from any RESTful API with minimal configuration. With fabric-ui, developers can instantly render entity management views by simply passing in API client details and a configuration object, eliminating the need to manually implement common CRUD operations.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,18 +12,24 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fabricui/fabricui.git"
+    "url": "git+https://github.com/instaui/instaui.git"
   },
   "keywords": [],
   "author": "kings1ay3r",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/fabricui/fabricui/issues"
+    "url": "https://github.com/instaui/instaui/issues"
   },
-  "homepage": "https://github.com/fabricui/fabricui#readme",
+  "homepage": "https://github.com/instaui/instaui#readme",
   "devDependencies": {
     "@types/node": "^22.7.5",
+    "@types/react": "^18.3.12",
     "typescript": "^5.6.2"
   },
-  "dependencies": {}
+  "dependencies": {
+    "antd": "^5.21.6",
+    "react": "^18.3.1",
+    "react-query": "^3.39.3",
+    "react-router-dom": "^6.27.0"
+  }
 }
