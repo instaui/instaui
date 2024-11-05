@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "ES6",
+    "outDir": "./dist",
+    "declaration": true,
+    "declarationDir": "./dist",
+    "jsx": "preserve",
+    "strict": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "types": ["@types/node", "@types/react"],
+    "lib": ["DOM", "ESNext"],
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}
