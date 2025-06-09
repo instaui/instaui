@@ -1,4 +1,7 @@
-export const UI_CONSTANTS = {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.UI_CONSTANTS = void 0;
+exports.UI_CONSTANTS = {
     // Modal and Drawer titles
     MODAL_TITLES: {
         EDIT_ITEM: 'Edit Item',

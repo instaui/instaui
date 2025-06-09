@@ -789,6 +789,181 @@ function App() {
 export default App;
 ```
 
+## API Signatures
+
+### Main Components
+
+#### ItemCrud
+
+The main component for creating CRUD interfaces.
+
+```typescript
+interface ItemCrudProps {
+	apiClient: ApiClient;
+	config: {
+		alertDuration?: number;
+		defaultPagesize?: number;
+		endpoints: EndpointConfig[];
+	};
+	useDrawer?: boolean;
+}
+```
+
+#### ApiClient
+
+Interface for the API client that handles communication with your backend.
+
+```typescript
+interface ApiClient {
+	get: (url: string, config?: any) => Promise<APIResponse>;
+	post: (url: string, data?: unknown, config?: any) => Promise<APIResponse>;
+	patch: (url: string, data?: unknown, config?: any) => Promise<APIResponse>;
+	delete: (url: string, config?: any) => Promise<APIResponse>;
+}
+```
+
+#### EndpointConfig
+
+Configuration for each endpoint in your API.
+
+```typescript
+interface EndpointConfig {
+	key: string;                 // Unique identifier for the endpoint
+	label: string;               // Display name for the endpoint
+	url: string;                 // API URL for the endpoint
+	idField?: string;            // Field to use as the ID (default: 'id')
+	fields: FieldConfig[];       // Array of field configurations
+	validator: (values: Record<string, unknown>) => Record<string, string>; // Form validation function
+	renderDetail?: (...args: unknown[]) => ReactNode; // Custom renderer for detail view
+	renderEdit?: (...args: unknown[]) => ReactNode;   // Custom renderer for edit view
+	customComponent?: React.ComponentType; // Custom component to render instead of the default CRUD UI
+	header?: React.ReactNode;    // Custom header component
+	footer?: React.ReactNode;    // Custom footer component
+	actionButtons?: ActionButtonConfig; // Configuration for action buttons
+}
+```
+
+#### FieldConfig
+
+Configuration for each field in an endpoint.
+
+```typescript
+interface FieldConfig {
+	key: string;                 // Field key in the API data
+	label: string;               // Display label for the field
+	type: 'text' | 'textarea' | 'number' | 'boolean' | 'date' | 'datetime' | 'time' | 'select' | 'relation' | 'url' | 'email'; // Field type
+	required?: boolean;          // Whether the field is required
+	readOnly?: boolean;          // Whether the field is read-only
+	placeHolder?: string;        // Placeholder text
+	options?: { label: string; value: string }[]; // Options for select fields
+	relation?: RelationConfig;   // Configuration for relation fields
+	showInList?: boolean;        // Whether to show the field in the list view
+	sortable?: boolean;          // Whether the field can be sorted
+	filterable?: boolean;        // Whether the field can be filtered
+	filterType?: 'eq' | 'range' | 'boolean'; // Type of filter to use
+	renderInList?: (value: any) => React.ReactNode; // Custom renderer for list view
+	renderInDetail?: (value: any) => React.ReactNode; // Custom renderer for detail view
+	validator?: (value: unknown) => { status: boolean; message?: string }; // Field-level validation
+	isFile?: boolean;            // Whether the field is a file upload
+	isImage?: boolean;           // Whether the field is an image upload
+	accept?: string | string[];  // Accepted file types
+	maxSize?: number;            // Maximum file size in MB
+	postable?: boolean;          // Whether the field can be included in POST requests
+	patchable?: boolean;         // Whether the field can be included in PATCH requests
+	dateFormat?: string;         // Format for date fields
+	keepLocalTime?: boolean;     // Whether to keep local time for date fields
+}
+```
+
+#### RelationConfig
+
+Configuration for relation fields.
+
+```typescript
+interface RelationConfig {
+	displayField?: string;       // Field to display from the related entity
+	render?: (arg0: Item) => ReactNode; // Custom renderer for the relation
+	entity: string;              // The related entity key
+	idField: string;             // The ID field of the related entity
+	keyColumns?: string[];       // Fields to display from the related entity
+	dropDownOptions?: (value: Record<string, unknown>) => { label: string; value: string }; // Custom function to format dropdown options
+}
+```
+
+#### ActionButtonConfig
+
+Configuration for action buttons.
+
+```typescript
+interface ActionButtonConfig {
+	show?: boolean;              // Whether to show action buttons at all
+	edit?: {
+		show?: boolean;            // Whether to show the edit button
+		text?: string;             // Custom text for the edit button
+		icon?: ReactNode;          // Custom icon for the edit button
+	};
+	delete?: {
+		show?: boolean;            // Whether to show the delete button
+		text?: string;             // Custom text for the delete button
+		icon?: ReactNode;          // Custom icon for the delete button
+	};
+}
+```
+
+### Response Types
+
+#### APIResponse
+
+Expected response format from the API.
+
+```typescript
+interface APIResponse {
+	status: string;
+	message: string;
+	data: ListResponse | ItemResponse;
+}
+```
+
+#### ListResponse
+
+Expected response format for list operations.
+
+```typescript
+interface ListResponse {
+	data: Item[];
+	count?: number;
+	items?: Item[];
+	results?: Item[];
+	total?: number;
+}
+```
+
+### Utility Functions
+
+#### getRelationString
+
+Formats a related entity as a string.
+
+```typescript
+function getRelationString(item: Item, keyColumns?: string[]): string;
+```
+
+#### formatDate
+
+Formats a date as a string.
+
+```typescript
+function formatDate(date: string | Date | number, format?: string): string;
+```
+
+#### formatDateTime
+
+Formats a date and time as a string.
+
+```typescript
+function formatDateTime(date: string | Date | number, format?: string): string;
+```
+
 ## Documentation
 
 For more detailed documentation, please see the [docs](./docs) folder:
