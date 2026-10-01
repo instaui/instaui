@@ -74,15 +74,6 @@ export default tseslint.config(
     },
   },
   {
-    // Pre-1.0 component, replaced by the new engine in R1 (see UPGRADE_PLAN.md §13).
-    // Its known hook-dependency defects are tracked as bugs B05/B18/B26 rather than patched here.
-    files: ['src/components/**'],
-    rules: {
-      'react-hooks/exhaustive-deps': 'warn',
-      '@typescript-eslint/no-explicit-any': 'warn',
-    },
-  },
-  {
     files: ['scripts/**', '*.config.{js,ts}'],
     languageOptions: { globals: globals.node },
     rules: { 'no-console': 'off' },

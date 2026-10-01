@@ -3,6 +3,24 @@
 All notable changes to this project are documented here. This project follows [Semantic Versioning](https://semver.org/).
 Note: versions `1.0.2` and `1.0.3` can never be published (npm reserved them from an unrelated 2016 package), so the release after `1.0.1` is `1.1.0`.
 
+## 1.0.0-next.0 (unreleased)
+
+The new engine (plan phase R1). **Breaking:** `ItemCrud`, `RelationField`, `getRelationString`, `UI_CONSTANTS` and `formatDate`/`formatDateTime` are removed.
+
+- `defineResource` + `InstaProvider` + `ResourceCrud` / `InstaAdmin`: one definition drives list, filters, detail, forms, actions and access.
+- DataProvider contract with `createRestProvider` (fetch), `fromApiClient` (axios-style clients) and `createMemoryProvider`.
+- `Where` condition/filter language shared by filters, field conditions and access rules.
+- No router dependency: `historyAdapter`, `memoryAdapter`, or `createRouterAdapter` with your app's own hooks.
+- TanStack Query for caching, deduplication and cancellation (new peer dependency `@tanstack/react-query ^5.90`). `react-router-dom` is no longer a peer.
+- Fixes, each with a regression test:
+  - **Navigation:** deep links keep their filters; Back closes an opened record.
+  - **Dates and numbers:** calendar dates never shift across time zones; 0/1 render; enum labels display.
+  - **Saves:** updates send only changed fields; cleared values are sent as `null`; form values never leak between records.
+  - **Relations:** related records are labelled with one batched request.
+  - **Links and URLs:** unsafe link schemes are refused; ids are always URL-encoded.
+  - **Deletes and pages:** deletes confirm with a loading state; page resources never fetch a list.
+- Notifications follow the host antd `<App>`; static `message` APIs are no longer used.
+
 ## 0.9.0-rc.1
 
 A pre-1.0 release candidate. It repackages the existing `ItemCrud` component, **unchanged in behaviour**, with a correct modern package (plan phase R0). The new 1.0 engine will ship as `1.0.0-next.*`.

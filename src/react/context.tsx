@@ -50,6 +50,8 @@ export interface InstaConfig {
   dataProvider: DataProvider;
   resources: ReadonlyMap<string, NormalizedResource>;
   router: RouterAdapter;
+  /** False when the provider fell back to its default (memory) router. */
+  routerProvided: boolean;
   ctx: InstaContext;
   messages: Messages;
   registry: InstaRegistry;
@@ -111,6 +113,7 @@ export function InstaProvider({
       dataProvider,
       resources: normalized,
       router: router ?? ownRouter,
+      routerProvided: router !== undefined,
       ctx: ctx ?? {},
       messages: mergedMessages,
       registry: registry ?? {},
@@ -141,6 +144,17 @@ export function InstaProvider({
 
   const tree = <InstaContextValue.Provider value={value}>{children}</InstaContextValue.Provider>;
   return hostClient ? tree : <QueryClientProvider client={ownClient}>{tree}</QueryClientProvider>;
+}
+
+/** Re-provides a modified config to a subtree (e.g. a different router). */
+export function InstaConfigOverride({
+  value,
+  children,
+}: {
+  value: InstaConfig;
+  children?: ReactNode;
+}) {
+  return <InstaContextValue.Provider value={value}>{children}</InstaContextValue.Provider>;
 }
 
 export function useInsta(): InstaConfig {

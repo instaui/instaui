@@ -1,32 +1,55 @@
 # instaui
 
-> **Status:** `0.9.0-rc.1` is a pre-1.0 release candidate. It repackages the existing `ItemCrud` component as a correct ESM package with peer dependencies. **1.0 is in development**, and its API will differ. The `0.0.x` releases are deprecated.
+> **Status:** `1.0.0-next` is the new engine, in development. The API may still change before `1.0.0`. The `0.x` releases (`ItemCrud`) are deprecated.
 
 **Config-first CRUD for antd.** Define a resource once, in TypeScript or as JSON served by your backend, and get the list, filters, forms, detail view, actions and permissions from that one definition.
 
-## Using 0.9.0-rc.1
+## Quick start
 
 ```bash
-npm install instaui@next
+npm install instaui@next @tanstack/react-query
 ```
-
-`ItemCrud` renders a list, detail view and forms for each configured endpoint. It needs two routes:
 
 ```tsx
-import { ItemCrud } from 'instaui';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { InstaAdmin, InstaProvider, createRestProvider, defineResource } from 'instaui';
 
-const crud = <ItemCrud apiClient={apiClient} config={{ endpoints }} />;
+const projects = defineResource({
+  name: 'projects',
+  recordLabel: '{name}',
+  fields: [
+    { key: 'name', type: 'text', required: true, list: { sortable: true }, filter: true },
+    { key: 'budget', type: 'number', props: { min: 0 } },
+    {
+      key: 'status',
+      type: 'enum',
+      props: {
+        options: [
+          { value: 'OPEN', label: 'Open' },
+          { value: 'DONE', label: 'Done' },
+        ],
+      },
+      filter: true,
+    },
+    { key: 'startsOn', type: 'date' },
+    { key: 'teamId', type: 'relation', props: { resource: 'teams' } },
+  ],
+  access: { delete: { status: { $ne: 'OPEN' } } },
+});
+const teams = defineResource({ name: 'teams', fields: [{ key: 'name', type: 'text' }] });
 
-<BrowserRouter>
-  <Routes>
-    <Route path="/:entity" element={crud} />
-    <Route path="/:entity/:operation/:id" element={crud} />
-  </Routes>
-</BrowserRouter>;
+export const App = () => (
+  <InstaProvider
+    dataProvider={createRestProvider({ baseUrl: '/api' })}
+    resources={[projects, teams]}
+  >
+    <InstaAdmin title="Admin" />
+  </InstaProvider>
+);
 ```
 
-List requests expect the `apiClient` to resolve to `{ data: Item[], count }`. The endpoint and field configuration types (`EndpointConfig`, `FieldConfig`, `ApiClient`) are exported.
+- **Using your app's router:** pass `router={createRouterAdapter({ useLocation, useNavigate })}` with the hooks from your own `react-router-dom`, and render `<ResourceCrud resource="projects" basePath="/projects" />` wherever you like.
+- **Using an existing axios-style client:** `fromApiClient(apiClient, { decodeList, encodeList })`.
+- **Tests and demos:** `createMemoryProvider(seed)`.
 
 ## What 1.0 will be
 
@@ -39,13 +62,13 @@ List requests expect the `apiClient` to resolve to `{ data: Item[], count }`. Th
 
 ## Requirements (peer dependencies)
 
-| Package              | Range                                                    |
-| -------------------- | -------------------------------------------------------- |
-| `react`, `react-dom` | `^18.2 \|\| ^19`                                         |
-| `antd`               | `^5.25 \|\| ^6`                                          |
-| `@ant-design/icons`  | `^5.6 \|\| ^6`                                           |
-| `dayjs`              | `^1.11`                                                  |
-| `react-router-dom`   | `^6.20 \|\| ^7` (0.9 only; 1.0 has no router dependency) |
+| Package                 | Range            |
+| ----------------------- | ---------------- |
+| `react`, `react-dom`    | `^18.2 \|\| ^19` |
+| `antd`                  | `^5.25 \|\| ^6`  |
+| `@ant-design/icons`     | `^5.6 \|\| ^6`   |
+| `dayjs`                 | `^1.11`          |
+| `@tanstack/react-query` | `^5.90`          |
 
 The package is **ESM-only** and has a single entry point (`import { … } from 'instaui'`). With Jest, add `instaui` to `transformIgnorePatterns` exceptions. With antd 5 on React 19, install and import `@ant-design/v5-patch-for-react-19` in your app; instaui never imports it.
 

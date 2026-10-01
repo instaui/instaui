@@ -82,9 +82,12 @@ function adapterFor(store: ReturnType<typeof createStore>): RouterAdapter {
 }
 
 /** In-memory routing. Each call creates an independent history. */
-export function memoryAdapter(
-  initial = '/',
-): RouterAdapter & { current(): RouterLocation; history: string[] } {
+export function memoryAdapter(initial = '/'): RouterAdapter & {
+  current(): RouterLocation;
+  history: string[];
+  /** Navigate outside React (tests, programmatic use). */
+  navigate(to: string, options?: NavigateOptions): void;
+} {
   let current = splitPath(initial);
   const history = [initial];
   const store = createStore(
@@ -96,7 +99,7 @@ export function memoryAdapter(
       else history.push(entry);
     },
   );
-  return { ...adapterFor(store), current: () => current, history };
+  return { ...adapterFor(store), current: () => current, history, navigate: store.navigate };
 }
 
 let browserStore: ReturnType<typeof createStore> | undefined;

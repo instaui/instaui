@@ -8,7 +8,15 @@ import {
   type InfiniteData,
 } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import type { AnyRecord, Id, ListParams, ListResult } from '../core/data-provider.ts';
+import type {
+  AnyRecord,
+  DataProvider,
+  Id,
+  InstaContext,
+  ListParams,
+  ListResult,
+  ResourceRef,
+} from '../core/data-provider.ts';
 import { recordId } from '../core/data-provider.ts';
 import type { ListState } from '../core/list-state.ts';
 import { resourceKeys } from '../core/query-keys.ts';
@@ -61,34 +69,41 @@ export function useResourceRecord(
   });
 }
 
-/** Records by id (relation labels). Uses `getMany` when the provider has it, else parallel `getOne`. */
+/** Fetches records by id: `getMany` when available, else parallel `getOne` (failures skipped). */
+export async function fetchRecordsByIds(
+  dataProvider: DataProvider,
+  ref: ResourceRef,
+  ids: string[],
+  ctx: InstaContext,
+  signal?: AbortSignal,
+): Promise<Map<string, AnyRecord>> {
+  const records = dataProvider.getMany
+    ? (await dataProvider.getMany<AnyRecord>({ resource: ref, ctx, ids, signal })).data
+    : await Promise.all(
+        ids.map(async (id) => {
+          try {
+            return (await dataProvider.getOne<AnyRecord>({ resource: ref, ctx, id, signal })).data;
+          } catch {
+            return undefined; // a deleted related record must not break the whole list
+          }
+        }),
+      );
+  const byId = new Map<string, AnyRecord>();
+  for (const r of records) {
+    const rid = r ? recordId(ref, r) : undefined;
+    if (r && rid !== undefined) byId.set(String(rid), r);
+  }
+  return byId;
+}
+
+/** Records by id (relation labels). */
 export function useRecordsByIds(resourceName: string | undefined, ids: Id[]) {
   const { dataProvider, ctx, resources } = useInsta();
   const resource = resourceName ? resources.get(resourceName) : undefined;
   const unique = useMemo(() => [...new Set(ids.map(String))].sort(), [ids]);
   return useQuery({
     queryKey: resourceKeys.many(resourceName ?? '', unique, ctx),
-    queryFn: async ({ signal }) => {
-      const ref = resource!.ref;
-      const records = dataProvider.getMany
-        ? (await dataProvider.getMany<AnyRecord>({ resource: ref, ctx, ids: unique, signal })).data
-        : await Promise.all(
-            unique.map(async (id) => {
-              try {
-                return (await dataProvider.getOne<AnyRecord>({ resource: ref, ctx, id, signal }))
-                  .data;
-              } catch {
-                return undefined; // a deleted related record must not break the whole list
-              }
-            }),
-          );
-      const byId = new Map<string, AnyRecord>();
-      for (const r of records) {
-        const rid = r ? recordId(ref, r) : undefined;
-        if (r && rid !== undefined) byId.set(String(rid), r);
-      }
-      return byId;
-    },
+    queryFn: ({ signal }) => fetchRecordsByIds(dataProvider, resource!.ref, unique, ctx, signal),
     enabled: resource !== undefined && unique.length > 0,
     staleTime: 60_000,
   });
