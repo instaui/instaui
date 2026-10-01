@@ -7,8 +7,9 @@ const { version } = JSON.parse(readFileSync(new URL('../package.json', import.me
 const SEMVER =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
 
-// Used and unpublished by a 2016 package of the same name; npm never allows reuse.
-const BURNED = new Set(['1.0.2', '1.0.3']);
+// npm never allows reuse: 1.0.2/1.0.3 were used by a 2016 package of the same name; 0.0.11 was
+// lost to a registry publishing error (accepted, never visible, refused on retry).
+const BURNED = new Set(['0.0.11', '1.0.2', '1.0.3']);
 
 const fail = (msg) => {
   console.error(`check-version: ${msg}`);
@@ -17,7 +18,7 @@ const fail = (msg) => {
 
 if (!SEMVER.test(version)) fail(`"${version}" is not valid semver`);
 if (BURNED.has(version.split('-')[0].split('+')[0]))
-  fail(`${version} uses a burned version number; release 1.1.0 after 1.0.1`);
+  fail(`${version} uses a burned version number (npm will refuse it); pick the next one`);
 
 const tag = process.env.RELEASE_TAG;
 if (tag && tag !== `v${version}`)

@@ -3,9 +3,9 @@
 All notable changes to this project are documented here. This project follows [Semantic Versioning](https://semver.org/).
 Note: versions `1.0.2` and `1.0.3` can never be published (npm reserved them from an unrelated 2016 package), so the release after `1.0.1` is `1.1.0`.
 
-## 0.0.11
+## 0.0.12
 
-The new engine, published on the 0.0.x line. The API is not stable yet and may change before 1.0.
+The new engine, published on the 0.0.x line. (0.0.11 was lost to an npm registry publishing error and is never available.) The API is not stable yet and may change before 1.0.
 
 ### Engine
 
@@ -42,7 +42,7 @@ The new engine (plan phase R1). **Breaking:** `ItemCrud`, `RelationField`, `getR
 
 ## 0.9.0-rc.1
 
-A pre-1.0 release candidate. It repackages the existing `ItemCrud` component, **unchanged in behaviour**, with a correct modern package (plan phase R0). The new engine shipped in 0.0.11.
+A pre-1.0 release candidate. It repackages the existing `ItemCrud` component, **unchanged in behaviour**, with a correct modern package (plan phase R0). The new engine shipped in 0.0.12.
 
 ### Packaging
 
