@@ -40,9 +40,20 @@ jobs:
         run: |
           version=$(node -p "require('./package.json').version")
           if [[ "$version" == *-* ]]; then echo "dist=next" >> "$GITHUB_OUTPUT"; else echo "dist=latest" >> "$GITHUB_OUTPUT"; fi
+      # Makes tag pushes idempotent: a version published manually is not published again.
+      - name: Check whether this version is already on npm
+        id: published
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if npm view "instaui@$version" version >/dev/null 2>&1; then
+            echo "instaui@$version is already published; skipping publish."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
       # Published with npm, not Yarn: Yarn 4.9 has no OIDC support.
       - name: Publish
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && steps.published.outputs.exists == 'false'
         run: npm publish --provenance --tag ${{ steps.tag.outputs.dist }}
       - name: Publish (dry run)
         if: github.event_name == 'workflow_dispatch'
