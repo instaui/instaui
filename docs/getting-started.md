@@ -3,7 +3,7 @@
 ## Install
 
 ```bash
-npm install instaui@next @tanstack/react-query
+npm install instaui @tanstack/react-query
 ```
 
 Peer dependencies: `react` and `react-dom` (`^18.2 || ^19`), `antd` (`^5.25 || ^6`), `@ant-design/icons` (`^5.6 || ^6`), `dayjs` (`^1.11`) and `@tanstack/react-query` (`^5.90`). The package is ESM-only.

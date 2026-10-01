@@ -3,24 +3,11 @@
 All notable changes to this project are documented here. This project follows [Semantic Versioning](https://semver.org/).
 Note: versions `1.0.2` and `1.0.3` can never be published (npm reserved them from an unrelated 2016 package), so the release after `1.0.1` is `1.1.0`.
 
-## 1.0.0-next.1 (unreleased)
+## 0.0.11
 
-Features for apps migrating from config-driven CRUD forks:
+The new engine, published on the 0.0.x line. The API is not stable yet and may change before 1.0.
 
-- **Lists:**
-  - `list.tabs`: tabs above the list, each with its own filter, kept in `?tab=`.
-  - `list.filterBar`: active-filter chips with clear buttons, plus optional saved views stored in localStorage.
-- **Filters:**
-  - `filter.paramRange: [from, to]` sends a range as two params (REST encoding and `paramUrlCodec`).
-  - `filter.multiple: false` makes an enum or relation filter single-select.
-  - `filter.widget: 'relation'` filters a plain id field with a relation picker.
-- **Access and conditions:**
-  - Access rules accept a function `(record, ctx) => boolean`.
-  - Conditions (`visibleIf`, `requiredIf`, `readOnlyIf`, action conditions) receive the record being edited.
-- **Custom row content:** `components.rowActions` renders it in each row, before the built-in actions.
-- **Routing:** `InstaAdmin` accepts `paths`, for route schemes such as `view/{id}`.
-
-## 1.0.0-next.0 (unreleased)
+### Engine
 
 The new engine (plan phase R1). **Breaking:** `ItemCrud`, `RelationField`, `getRelationString`, `UI_CONSTANTS` and `formatDate`/`formatDateTime` are removed.
 
@@ -38,9 +25,24 @@ The new engine (plan phase R1). **Breaking:** `ItemCrud`, `RelationField`, `getR
   - **Deletes and pages:** deletes confirm with a loading state; page resources never fetch a list.
 - Notifications follow the host antd `<App>`; static `message` APIs are no longer used.
 
+### Features for apps migrating from config-driven CRUD forks
+
+- **Lists:**
+  - `list.tabs`: tabs above the list, each with its own filter, kept in `?tab=`.
+  - `list.filterBar`: active-filter chips with clear buttons, plus optional saved views stored in localStorage.
+- **Filters:**
+  - `filter.paramRange: [from, to]` sends a range as two params (REST encoding and `paramUrlCodec`).
+  - `filter.multiple: false` makes an enum or relation filter single-select.
+  - `filter.widget: 'relation'` filters a plain id field with a relation picker.
+- **Access and conditions:**
+  - Access rules accept a function `(record, ctx) => boolean`.
+  - Conditions (`visibleIf`, `requiredIf`, `readOnlyIf`, action conditions) receive the record being edited.
+- **Custom row content:** `components.rowActions` renders it in each row, before the built-in actions.
+- **Routing:** `InstaAdmin` accepts `paths`, for route schemes such as `view/{id}`.
+
 ## 0.9.0-rc.1
 
-A pre-1.0 release candidate. It repackages the existing `ItemCrud` component, **unchanged in behaviour**, with a correct modern package (plan phase R0). The new 1.0 engine will ship as `1.0.0-next.*`.
+A pre-1.0 release candidate. It repackages the existing `ItemCrud` component, **unchanged in behaviour**, with a correct modern package (plan phase R0). The new engine shipped in 0.0.11.
 
 ### Packaging
 

@@ -1,13 +1,13 @@
 # instaui
 
-> **Status:** `1.0.0-next` is the new engine, in development. The API may still change before `1.0.0`. The `0.x` releases (`ItemCrud`) are deprecated.
+> **Status:** `0.0.11` ships the new engine. It is pre-1.0, so the API may still change. 0.0.10 and earlier (`ItemCrud`) are deprecated.
 
 **Config-first CRUD for antd.** Define a resource once, in TypeScript or as JSON served by your backend, and get the list, filters, forms, detail view, actions and permissions from that one definition.
 
 ## Quick start
 
 ```bash
-npm install instaui@next @tanstack/react-query
+npm install instaui @tanstack/react-query
 ```
 
 ```tsx
