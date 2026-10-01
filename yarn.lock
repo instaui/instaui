@@ -1527,6 +1527,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tanstack/query-core@npm:5.104.0":
+  version: 5.104.0
+  resolution: "@tanstack/query-core@npm:5.104.0"
+  checksum: 10c0/e080454f308dc41bf0e52e46aac455af3112f454519d369740aacaec4d260a3bfddde569204908ff7a6e1b1b84f8e065e0ac1375555e2bc1b023d398c0b44f96
+  languageName: node
+  linkType: hard
+
+"@tanstack/react-query@npm:^5.90.0":
+  version: 5.104.0
+  resolution: "@tanstack/react-query@npm:5.104.0"
+  dependencies:
+    "@tanstack/query-core": "npm:5.104.0"
+  peerDependencies:
+    react: ^18 || ^19
+  checksum: 10c0/efcf6328c95847c99e4b41c6e68f74d303b8e9eef673473648643dd2fcc8d9d3368223f27a4e510526f3fa3fd5508554e804141a67a9cf37c90842f8639cb430
+  languageName: node
+  linkType: hard
+
 "@testing-library/dom@npm:^10.4.2":
   version: 10.4.2
   resolution: "@testing-library/dom@npm:10.4.2"
@@ -2796,6 +2814,7 @@ __metadata:
     "@ant-design/icons": "npm:^6.3.4"
     "@arethetypeswrong/cli": "npm:^0.18.5"
     "@eslint/js": "npm:^10.0.1"
+    "@tanstack/react-query": "npm:^5.90.0"
     "@testing-library/dom": "npm:^10.4.2"
     "@testing-library/react": "npm:^16.3.3"
     "@types/react": "npm:^19.3.0"

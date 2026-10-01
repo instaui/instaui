@@ -44,6 +44,36 @@ export default tseslint.config(
     },
   },
   {
+    // The core is pure TypeScript: no React, antd or TanStack, so it stays testable and portable.
+    files: ['src/core/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: [
+                'react',
+                'react-dom',
+                'react/*',
+                'antd',
+                'antd/*',
+                '@ant-design/*',
+                '@tanstack/*',
+              ],
+              message:
+                'src/core must stay framework-free; put React/antd code in src/react or src/antd.',
+            },
+            {
+              group: ['../react/*', '../antd/*', '../components/*'],
+              message: 'src/core must not depend on the React or antd layers.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     // Pre-1.0 component, replaced by the new engine in R1 (see UPGRADE_PLAN.md §13).
     // Its known hook-dependency defects are tracked as bugs B05/B18/B26 rather than patched here.
     files: ['src/components/**'],
