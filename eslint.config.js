@@ -36,7 +36,7 @@ export default tseslint.config(
             {
               group: ['react-router', 'react-router/*'],
               message:
-                "Never import 'react-router' (aurora hoists v5). Routing goes through injected hooks.",
+                "Never import 'react-router': apps may hoist a different major. Routing goes through injected hooks.",
             },
           ],
         },
