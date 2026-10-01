@@ -58,6 +58,8 @@ test('public runtime exports', () => {
       "safeUrl",
       "setupDayjs",
       "toConditions",
+      "unstable_ResourceDetail",
+      "unstable_ResourceForm",
       "useCan",
       "useInsta",
       "useRecordsByIds",
@@ -68,6 +70,7 @@ test('public runtime exports', () => {
       "useResourceRecord",
       "useResourceRouting",
       "useResourceSubmit",
+      "useResourceTable",
       "validateConfig",
     ]
   `);

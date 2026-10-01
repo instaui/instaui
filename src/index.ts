@@ -139,3 +139,10 @@ export { ResourceCrud } from './antd/ResourceCrud.tsx';
 export type { ResourceCrudProps, ViewProps } from './antd/ResourceCrud.tsx';
 export { ResourceTable } from './antd/ResourceTable.tsx';
 export type { ResourceTableProps } from './antd/ResourceTable.tsx';
+export { useResourceTable } from './antd/useResourceTable.tsx';
+export type { UseResourceTableOptions } from './antd/useResourceTable.tsx';
+export {
+  UnstableResourceDetail as unstable_ResourceDetail,
+  UnstableResourceForm as unstable_ResourceForm,
+} from './antd/unstable.tsx';
+export type { UnstableResourceDetailProps, UnstableResourceFormProps } from './antd/unstable.tsx';

@@ -216,3 +216,43 @@ describe('page resources and shells', () => {
     expect(screen.getByLabelText('Collapse menu')).toBeTruthy();
   });
 });
+
+describe('escape hatches', () => {
+  test('useResourceTable with local state renders a filtered child list without touching the URL', async () => {
+    const { useResourceTable } = await import('./useResourceTable.tsx');
+    const { ResourceTable } = await import('./ResourceTable.tsx');
+    function OpenProjects() {
+      const { tableProps } = useResourceTable('projects', { filter: { status: 'OPEN' } });
+      return <ResourceTable {...tableProps} />;
+    }
+    const router = memoryAdapter('/somewhere');
+    render(
+      <InstaProvider
+        dataProvider={createMemoryProvider(seed())}
+        resources={[projects, teams]}
+        router={router}
+      >
+        <OpenProjects />
+      </InstaProvider>,
+    );
+    expect(await screen.findByText('Apollo')).toBeTruthy();
+    expect(screen.queryByText('Gemini')).toBeNull();
+    fireEvent.click(screen.getByRole('columnheader', { name: /Name/ }));
+    expect(router.current()).toEqual({ pathname: '/somewhere', search: '' });
+  });
+
+  test('unstable_ResourceForm loads, edits and saves a record outside ResourceCrud', async () => {
+    const { UnstableResourceForm: ResourceFormBlock } = await import('./unstable.tsx');
+    const dataProvider = createMemoryProvider(seed());
+    const onDone = vi.fn();
+    render(
+      <InstaProvider dataProvider={dataProvider} resources={[projects, teams]}>
+        <ResourceFormBlock resource="projects" mode="edit" id={2} onDone={onDone} />
+      </InstaProvider>,
+    );
+    fireEvent.change(await screen.findByDisplayValue('Gemini'), { target: { value: 'Gemini II' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(onDone).toHaveBeenCalled());
+    expect(dataProvider.snapshot().projects![1]).toMatchObject({ name: 'Gemini II' });
+  });
+});
