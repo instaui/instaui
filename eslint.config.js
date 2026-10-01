@@ -74,6 +74,11 @@ export default tseslint.config(
     },
   },
   {
+    // The one sanctioned console access.
+    files: ['src/core/warn.ts'],
+    rules: { 'no-console': 'off' },
+  },
+  {
     files: ['scripts/**', '*.config.{js,ts}'],
     languageOptions: { globals: globals.node },
     rules: { 'no-console': 'off' },

@@ -27,6 +27,8 @@ export interface ListDefaults {
   sort?: SortSpec[];
   /** Field types by path, used to restore typed filter values (`'number'`, `'boolean'`). */
   fieldTypes?: Record<string, string>;
+  /** Query param name per field key (`field.filter.param`), for codecs that mirror the API query. */
+  fieldParams?: Record<string, string>;
 }
 
 export interface UrlCodec {
@@ -109,3 +111,86 @@ export const defaultUrlCodec: UrlCodec = {
     return text ? `?${text}` : '';
   },
 };
+
+export interface ParamUrlCodecOptions {
+  page?: string;
+  pageSize?: string;
+  sort?: string;
+  order?: string;
+  search?: string;
+}
+
+/**
+ * A URL format that mirrors the REST provider's query (`?page=2&sort=name&order=asc&status=A&amount[gte]=10&q=x`),
+ * so the browser URL and the API query look the same. Only declared fields are read back as filters.
+ */
+export function paramUrlCodec({
+  page = 'page',
+  pageSize = 'pageSize',
+  sort = 'sort',
+  order = 'order',
+  search = 'q',
+}: ParamUrlCodecOptions = {}): UrlCodec {
+  const reserved = new Set([page, pageSize, sort, order, search]);
+  const BRACKET = /^(.+)\[([a-zA-Z]+)\]$/;
+  return {
+    parse(query, defaults) {
+      const params = new URLSearchParams(query);
+      const fields = Object.keys(defaults.fieldTypes ?? {});
+      const byParam = new Map(fields.map((f) => [defaults.fieldParams?.[f] ?? f, f]));
+      const conditions: Condition[] = [];
+      for (const [key, raw] of params) {
+        if (reserved.has(key)) continue;
+        const m = BRACKET.exec(key);
+        const field = byParam.get(m ? m[1]! : key);
+        if (!field) continue; // undeclared params are ignored
+        const op: Operator = m ? (`$${m[2]}` as Operator) : '$eq';
+        if (!OPS.has(op.slice(1))) continue;
+        const type = defaults.fieldTypes?.[field];
+        const value = MULTI.has(op)
+          ? raw.split(',').map((v) => coerce(v, type, op))
+          : coerce(raw, type, op);
+        conditions.push({ field, op, value });
+      }
+      const sortFields = params.has(sort)
+        ? (params.get(sort) ?? '').split(',').filter(Boolean)
+        : undefined;
+      const orders = (params.get(order) ?? '').split(',');
+      const q = params.get(search) ?? undefined;
+      return {
+        page: positiveInt(params.get(page), 1),
+        pageSize: positiveInt(params.get(pageSize), defaults.pageSize),
+        sort: sortFields
+          ? sortFields.map((field, i) => ({
+              field,
+              order: orders[i] === 'desc' ? ('desc' as const) : ('asc' as const),
+            }))
+          : (defaults.sort ?? []),
+        filter: fromConditions(conditions),
+        ...(q ? { search: q } : {}),
+      };
+    },
+    stringify(state, defaults) {
+      const params = new URLSearchParams();
+      if (state.page !== 1) params.set(page, String(state.page));
+      if (state.pageSize !== defaults.pageSize) params.set(pageSize, String(state.pageSize));
+      const same = JSON.stringify(state.sort) === JSON.stringify(defaults.sort ?? []);
+      if (!same) {
+        params.set(sort, state.sort.map((s) => s.field).join(','));
+        if (state.sort.length) params.set(order, state.sort.map((s) => s.order).join(','));
+      }
+      for (const { field, op, value } of toConditions(state.filter)) {
+        if (value === undefined || value === '' || (Array.isArray(value) && value.length === 0))
+          continue;
+        const name = defaults.fieldParams?.[field] ?? field;
+        params.set(op === '$eq' ? name : `${name}[${op.slice(1)}]`, encodeValue(value));
+      }
+      if (state.search) params.set(search, state.search);
+      const text = params.toString();
+      return text ? `?${text}` : '';
+    },
+  };
+}
+
+/** The browser URL is the API query (REST provider defaults). */
+export const passthroughUrlCodec: UrlCodec = paramUrlCodec();

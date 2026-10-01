@@ -102,7 +102,8 @@ export function defaultEncodeList(params: ListParams): Record<string, QueryValue
     query.order = params.sort.map((s) => s.order).join(',');
   }
   for (const { field, op, value } of toConditions(params.filter, { ctx: params.ctx })) {
-    query[op === '$eq' ? field : `${field}[${op.slice(1)}]`] = joinValue(value);
+    const name = params.resource.params?.[field] ?? field;
+    query[op === '$eq' ? name : `${name}[${op.slice(1)}]`] = joinValue(value);
   }
   if (params.search) query.q = params.search;
   return query;

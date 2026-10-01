@@ -6,6 +6,7 @@ test('public runtime exports', () => {
   expect(Object.keys(instaui).sort()).toMatchInlineSnapshot(`
     [
       "CodecError",
+      "ConfigError",
       "FieldDisplay",
       "FilterControl",
       "HttpError",
@@ -45,7 +46,10 @@ test('public runtime exports', () => {
       "isHttpError",
       "matchView",
       "memoryAdapter",
+      "mergeResource",
       "normalizeResource",
+      "paramUrlCodec",
+      "passthroughUrlCodec",
       "recordId",
       "recordLabel",
       "renderTemplate",
@@ -64,6 +68,7 @@ test('public runtime exports', () => {
       "useResourceRecord",
       "useResourceRouting",
       "useResourceSubmit",
+      "validateConfig",
     ]
   `);
 });

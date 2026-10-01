@@ -23,8 +23,12 @@ export type {
 export { errorMessage, HttpError, isHttpError } from './core/http-error.ts';
 export type { FieldErrors, HttpErrorInit } from './core/http-error.ts';
 export { recordLabel } from './core/label.ts';
-export { defaultUrlCodec } from './core/list-state.ts';
-export type { ListDefaults, ListState, UrlCodec } from './core/list-state.ts';
+export { defaultUrlCodec, paramUrlCodec, passthroughUrlCodec } from './core/list-state.ts';
+export type { ListDefaults, ListState, ParamUrlCodecOptions, UrlCodec } from './core/list-state.ts';
+export { mergeResource } from './core/merge-resource.ts';
+export type { FieldPatch, ResourcePatch } from './core/merge-resource.ts';
+export { ConfigError, validateConfig } from './core/validate-config.ts';
+export type { ConfigIssue, ValidateOptions } from './core/validate-config.ts';
 export { createMemoryProvider } from './core/memory-provider.ts';
 export type { MemoryProviderOptions } from './core/memory-provider.ts';
 export { resourceKeys } from './core/query-keys.ts';

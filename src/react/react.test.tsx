@@ -226,3 +226,34 @@ describe('useResourceSubmit', () => {
     });
   });
 });
+
+describe('config validation in InstaProvider', () => {
+  test('reports issues through one warning channel; strict mode throws', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const broken = defineResource({ name: 'broken', fields: [{ key: 'x', type: 'nope' }] });
+    renderHook(() => null, {
+      wrapper: ({ children }) => (
+        <InstaProvider dataProvider={createMemoryProvider()} resources={[broken]}>
+          {children}
+        </InstaProvider>
+      ),
+    });
+    expect(warn).toHaveBeenCalledWith(
+      '[instaui] Config error in broken.fields.x.type: Unknown field type "nope"',
+    );
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect(() =>
+      renderHook(() => null, {
+        wrapper: ({ children }) => (
+          <InstaProvider
+            dataProvider={createMemoryProvider()}
+            resources={[broken]}
+            validate="strict"
+          >
+            {children}
+          </InstaProvider>
+        ),
+      }),
+    ).toThrow(/Invalid instaui config/);
+  });
+});

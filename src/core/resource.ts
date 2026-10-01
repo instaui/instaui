@@ -288,7 +288,16 @@ export function normalizeResource<T extends object>(
     },
     patch: definition.form?.patch ?? (definition.form?.beforeSubmit ? 'full' : 'diff'),
     actions: definition.actions ?? DEFAULT_ACTIONS,
-    ref: { name: definition.name, idField: idField as ResourceRef['idField'], api },
+    ref: {
+      name: definition.name,
+      idField: idField as ResourceRef['idField'],
+      api,
+      params: Object.fromEntries(
+        definition.fields.flatMap((f) =>
+          typeof f.filter === 'object' && f.filter.param ? [[f.key, f.filter.param]] : [],
+        ),
+      ),
+    },
   };
 }
 

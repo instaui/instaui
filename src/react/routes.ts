@@ -101,6 +101,7 @@ export function useResourceRouting(
       pageSize: resource.list.pageSize,
       sort: resource.list.sort,
       fieldTypes: Object.fromEntries(resource.fields.map((f) => [f.key, f.type])),
+      fieldParams: { ...resource.ref.params },
     }),
     [resource],
   );

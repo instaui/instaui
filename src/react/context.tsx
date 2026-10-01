@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientContext, QueryClientProvider } from '@tanstack/react-query';
-import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { setupDayjs, type CodecEnv, type FieldCodec, type Timezone } from '../core/codecs.ts';
 import type { AnyRecord, DataProvider, InstaContext } from '../core/data-provider.ts';
 import { isHttpError } from '../core/http-error.ts';
@@ -12,6 +12,8 @@ import {
 } from '../core/resource.ts';
 import { defaultMessages, type Messages } from './messages.ts';
 import { memoryAdapter, type RouterAdapter } from './router.ts';
+import { validateConfig } from '../core/validate-config.ts';
+import { warn } from '../core/warn.ts';
 
 export type AccessAction = 'list' | 'detail' | 'create' | 'edit' | 'delete' | (string & {});
 
@@ -41,6 +43,8 @@ export interface InstaProviderProps {
   can?: (check: AccessCheck) => boolean;
   urlCodec?: UrlCodec;
   defaults?: { pageSize?: number };
+  /** Config validation: `'report'` (default) warns, `'strict'` throws on errors, `false` skips. */
+  validate?: 'report' | 'strict' | false;
   /** Used only when no `QueryClientProvider` is above. */
   queryClient?: QueryClient;
   children?: ReactNode;
@@ -87,6 +91,7 @@ export function InstaProvider({
   can,
   urlCodec = defaultUrlCodec,
   defaults,
+  validate = 'report',
   queryClient,
   children,
 }: InstaProviderProps) {
@@ -94,6 +99,25 @@ export function InstaProvider({
   const hostClient = useContext(QueryClientContext);
   const [ownClient] = useState(() => queryClient ?? createInstaQueryClient());
   const [ownRouter] = useState(() => router ?? memoryAdapter());
+
+  const issues = useMemo(() => {
+    if (validate === false) return [];
+    const keys = (v: unknown) => (v && typeof v === 'object' ? Object.keys(v) : []);
+    return validateConfig(resources, {
+      mode: validate,
+      fieldTypes: keys(registry?.codecs),
+      widgets: keys(registry?.widgets),
+      displays: keys(registry?.displays),
+      components: keys(registry?.components),
+    });
+  }, [resources, registry, validate]);
+  useEffect(() => {
+    for (const i of issues) {
+      warn(
+        `${i.level === 'error' ? 'Config error' : 'Config warning'} in ${i.resource}.${i.path}: ${i.message}`,
+      );
+    }
+  }, [issues]);
 
   const normalized = useMemo(() => {
     const map = new Map<string, NormalizedResource>();

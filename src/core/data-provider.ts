@@ -19,6 +19,8 @@ export interface ResourceRef {
   name: string;
   idField: string | ((record: Record<string, unknown>) => Id);
   api: ResourceApi;
+  /** Query param name per field key, when it differs (from `field.filter.param`). */
+  params?: Readonly<Record<string, string>>;
 }
 
 interface BaseParams {
