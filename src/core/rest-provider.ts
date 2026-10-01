@@ -102,6 +102,18 @@ export function defaultEncodeList(params: ListParams): Record<string, QueryValue
     query.order = params.sort.map((s) => s.order).join(',');
   }
   for (const { field, op, value } of toConditions(params.filter, { ctx: params.ctx })) {
+    const range = params.resource.paramRanges?.[field];
+    if (range && (op === '$gte' || op === '$lte' || op === '$between')) {
+      const [lo, hi] =
+        op === '$between'
+          ? (value as [unknown, unknown])
+          : op === '$gte'
+            ? [value, undefined]
+            : [undefined, value];
+      if (lo !== undefined) query[range[0]] = lo as QueryValue;
+      if (hi !== undefined) query[range[1]] = hi as QueryValue;
+      continue;
+    }
     const name = params.resource.params?.[field] ?? field;
     query[op === '$eq' ? name : `${name}[${op.slice(1)}]`] = joinValue(value);
   }

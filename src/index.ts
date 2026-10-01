@@ -34,6 +34,7 @@ export type { MemoryProviderOptions } from './core/memory-provider.ts';
 export { resourceKeys } from './core/query-keys.ts';
 export { conditionMet, defineResource, normalizeResource } from './core/resource.ts';
 export type {
+  AccessRule,
   ActionConfirm,
   ActionContext,
   ActionDefinition,
@@ -51,6 +52,7 @@ export type {
   FilterOptions,
   FormMode,
   ListColumnOptions,
+  ListTab,
   NormalizedField,
   NormalizedResource,
   ResourceAction,
@@ -146,3 +148,5 @@ export {
   UnstableResourceForm as unstable_ResourceForm,
 } from './antd/unstable.tsx';
 export type { UnstableResourceDetailProps, UnstableResourceFormProps } from './antd/unstable.tsx';
+export { FilterBar } from './antd/FilterBar.tsx';
+export type { FilterBarProps } from './antd/FilterBar.tsx';

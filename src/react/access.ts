@@ -18,7 +18,11 @@ export function isAllowed(
   const rule = resource.access?.[action];
   const ruleOk =
     rule === undefined ||
-    (typeof rule === 'boolean' ? rule : evaluateWhere(rule, { record, ctx }, record ?? {}));
+    (typeof rule === 'boolean'
+      ? rule
+      : typeof rule === 'function'
+        ? rule(record, ctx)
+        : evaluateWhere(rule, { record, ctx }, record ?? {}));
   return ruleOk && (can ? can({ resource: resource.name, action, record }) : true);
 }
 

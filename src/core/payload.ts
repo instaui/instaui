@@ -43,10 +43,11 @@ export function isFieldSubmitted<T extends object>(
   mode: FormMode,
   values: AnyRecord,
   ctx: InstaContext,
+  record?: AnyRecord,
 ): boolean {
   if (field.submit === 'never') return false;
   if (field.submit === 'always') return true;
-  return field[mode] === 'editable' && conditionMet(field.visibleIf, values as T, ctx);
+  return field[mode] === 'editable' && conditionMet(field.visibleIf, values as T, ctx, record);
 }
 
 /**
@@ -64,7 +65,7 @@ export function buildSubmitPayload<T extends object>({
 }: PayloadInput<T>): AnyRecord {
   let payload: AnyRecord = {};
   for (const field of resource.fields) {
-    if (!isFieldSubmitted(field, mode, values, ctx)) continue;
+    if (!isFieldSubmitted(field, mode, values, ctx, original)) continue;
     const codec = codecFor(field.type, codecs);
     const c = { ...env, props: field.props };
     const encoded = codec.encode(getPath(values, field.key), c);

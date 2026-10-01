@@ -74,10 +74,27 @@ export interface FilterOptions {
   operators?: Operator[];
   /** Query/URL param name, when it differs from the field key. */
   param?: string;
+  /** Range filters sent as two params, e.g. `['createdFrom', 'createdTo']` (`$gte` / `$lte`). */
+  paramRange?: [string, string];
+  /** enum/relation/tags filters: pick several values (`$in`, default) or one (`$eq`). */
+  multiple?: boolean;
+  /** Filter input override, e.g. `'relation'` (with `props.resource`) on a text field. */
   widget?: string;
 }
 
-export type Condition<T> = Where | ((values: T, ctx: InstaContext) => boolean);
+/** A `Where` or a function. In forms, `record` is the record being edited (undefined on create). */
+export type Condition<T> = Where | ((values: T, ctx: InstaContext, record?: AnyRecord) => boolean);
+
+/** An access rule: boolean, `Where` on the record, or a function. */
+export type AccessRule =
+  boolean | Where | ((record: AnyRecord | undefined, ctx: InstaContext) => boolean);
+
+export interface ListTab {
+  key: string;
+  label: string;
+  /** Filter applied while this tab is active (AND-ed with the user's filters). */
+  filter?: Where;
+}
 
 export interface FieldDefinition<T = AnyRecord> {
   /** Dot paths allowed (`'manager.email'`). */
@@ -186,6 +203,10 @@ export interface ResourceDefinition<T extends object = AnyRecord> {
     /** Permanent filter, AND-ed with the user's filters. */
     filter?: Where;
     search?: boolean;
+    /** Tabs above the list; the first is the default. Synced to `?tab=`. */
+    tabs?: ListTab[];
+    /** Active-filter chips with clear buttons; `savedViews` stores named filter sets per browser. */
+    filterBar?: boolean | { savedViews?: boolean };
   };
   form?: {
     container?: ContainerOptions;
@@ -198,8 +219,9 @@ export interface ResourceDefinition<T extends object = AnyRecord> {
   detail?: { container?: ContainerOptions };
   actions?: ResourceAction<T>[];
   /** Per action: boolean or a `Where` on the record. AND-ed with the provider's `can()`. */
-  access?: Partial<Record<BuiltinAction | 'list' | (string & {}), boolean | Where>>;
-  components?: Partial<Record<'page' | 'detail' | 'create' | 'edit', unknown>>;
+  access?: Partial<Record<BuiltinAction | 'list' | (string & {}), AccessRule>>;
+  /** View overrides, plus `rowActions`: extra content rendered in each row's actions cell. */
+  components?: Partial<Record<'page' | 'detail' | 'create' | 'edit' | 'rowActions', unknown>>;
   [extension: `x-${string}`]: unknown;
 }
 
@@ -227,7 +249,14 @@ export interface NormalizedResource<T extends object = AnyRecord> extends Resour
   api: ResourceApi;
   kind: 'collection' | 'page';
   fields: NormalizedField<T>[];
-  list: { pageSize: number; sort: SortSpec[]; filter: Where; search: boolean };
+  list: {
+    pageSize: number;
+    sort: SortSpec[];
+    filter: Where;
+    search: boolean;
+    tabs: ListTab[];
+    filterBar?: { savedViews?: boolean };
+  };
   patch: 'diff' | 'full';
   actions: ResourceAction<T>[];
   ref: ResourceRef;
@@ -285,6 +314,11 @@ export function normalizeResource<T extends object>(
       sort: definition.list?.sort ?? [],
       filter: definition.list?.filter ?? {},
       search: definition.list?.search ?? false,
+      tabs: definition.list?.tabs ?? [],
+      filterBar:
+        definition.list?.filterBar === true
+          ? { savedViews: false }
+          : definition.list?.filterBar || undefined,
     },
     patch: definition.form?.patch ?? (definition.form?.beforeSubmit ? 'full' : 'diff'),
     actions: definition.actions ?? DEFAULT_ACTIONS,
@@ -297,6 +331,11 @@ export function normalizeResource<T extends object>(
           typeof f.filter === 'object' && f.filter.param ? [[f.key, f.filter.param]] : [],
         ),
       ),
+      paramRanges: Object.fromEntries(
+        definition.fields.flatMap((f) =>
+          typeof f.filter === 'object' && f.filter.paramRange ? [[f.key, f.filter.paramRange]] : [],
+        ),
+      ),
     },
   };
 }
@@ -306,9 +345,10 @@ export function conditionMet<T>(
   condition: Condition<T> | undefined,
   values: T,
   ctx: InstaContext,
+  record?: AnyRecord,
 ): boolean {
   if (condition === undefined) return true;
   return typeof condition === 'function'
-    ? condition(values, ctx)
-    : evaluateWhere(condition, { values, ctx });
+    ? condition(values, ctx, record)
+    : evaluateWhere(condition, { values, ctx, record });
 }

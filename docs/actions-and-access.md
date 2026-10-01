@@ -71,7 +71,7 @@ After a custom action succeeds, the resource's data is refreshed. Set `onSuccess
 
 ## Access
 
-`access` maps an action (built-in or custom id, or `list`) to `true`/`false`, or to a [`Where`](where.md) on the record. `<InstaProvider can={…}>` adds an app-wide check, and the two are AND-ed. Checks are synchronous.
+`access` maps an action (built-in or custom id, or `list`) to `true`/`false`, a [`Where`](where.md) on the record, or a function `(record, ctx) => boolean`. `<InstaProvider can={…}>` adds an app-wide check, and the two are AND-ed. Checks are synchronous.
 
 ```tsx
 import {
@@ -110,3 +110,24 @@ Access is enforced:
 - **on buttons,** which are hidden when not allowed
 - **on rows,** which only open when `detail` is allowed
 - **on routes:** opening `/posts/7/edit` for a record you can't edit shows "not allowed" instead of the form
+
+## Custom row content
+
+`components.rowActions` renders extra content in each row's actions cell, before the built-in buttons. Use it for buttons with their own logic. It receives `ViewProps`, with `record` set to the row.
+
+```tsx
+import { Button } from 'antd';
+import { defineResource, type ViewProps } from 'instaui';
+
+const History = ({ record, navigate }: ViewProps) => (
+  <Button type="link" size="small" onClick={() => navigate(`/audit?entity=${String(record?.id)}`)}>
+    History
+  </Button>
+);
+
+export const accounts = defineResource({
+  name: 'accounts',
+  fields: [{ key: 'name', type: 'text' }],
+  components: { rowActions: History },
+});
+```

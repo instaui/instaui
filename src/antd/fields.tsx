@@ -401,11 +401,14 @@ const emptyToUndefined = (ops: PredicateOps) =>
 /** The filter input for a field type; returns a predicate for the list's `Where`. */
 export function FilterControl({ field, value, onChange }: FilterControlProps) {
   const { messages } = useInsta();
+  const filterOptions = field.filter === false ? {} : field.filter;
+  const kind = filterOptions.widget ?? field.type;
+  const multiple = filterOptions.multiple ?? true;
   const options = (field.props.options ?? []).map((o) => ({
     value: o.value as string | number,
     label: o.label,
   }));
-  switch (field.type) {
+  switch (kind) {
     case 'number':
       return (
         <Space.Compact>
@@ -439,6 +442,20 @@ export function FilterControl({ field, value, onChange }: FilterControlProps) {
       );
     case 'enum':
     case 'tags':
+      if (kind === 'enum' && !multiple) {
+        return (
+          <Select
+            aria-label={field.label}
+            style={{ width: 220 }}
+            allowClear
+            value={value?.$eq as string | number | undefined}
+            options={options}
+            onChange={(v: string | number | undefined) =>
+              onChange(v === undefined ? undefined : { $eq: v })
+            }
+          />
+        );
+      }
       return (
         <Select
           aria-label={field.label}
@@ -454,11 +471,23 @@ export function FilterControl({ field, value, onChange }: FilterControlProps) {
       return (
         <RelationSelect
           resource={field.props.resource ?? ''}
-          multiple
+          multiple={multiple}
           label={field.props.label}
           style={{ width: 240 }}
-          value={(value?.$in as Id[] | undefined) ?? []}
-          onChange={(v) => onChange(Array.isArray(v) && v.length ? { $in: v } : undefined)}
+          value={
+            multiple ? ((value?.$in as Id[] | undefined) ?? []) : (value?.$eq as Id | undefined)
+          }
+          onChange={(v) =>
+            onChange(
+              multiple
+                ? Array.isArray(v) && v.length
+                  ? { $in: v }
+                  : undefined
+                : v === undefined || Array.isArray(v)
+                  ? undefined
+                  : { $eq: v },
+            )
+          }
         />
       );
     case 'date':

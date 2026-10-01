@@ -72,6 +72,52 @@ export const orders = defineResource<Order>({
 | `visibleIf`       | always                 | A [`Where`](where.md) or a function of the form values. Hidden fields aren't submitted. |
 | `submit`          | `'whenVisible'`        | `'always'` submits read-only or hidden values too; `'never'` never submits.             |
 
+## Lists: tabs, filter bar, ranges
+
+```tsx
+import { defineResource } from 'instaui';
+
+export const tickets = defineResource({
+  name: 'tickets',
+  fields: [
+    { key: 'subject', type: 'text', filter: true },
+    {
+      key: 'priority',
+      type: 'enum',
+      filter: { multiple: false },
+      props: {
+        options: [
+          { value: 'HIGH', label: 'High' },
+          { value: 'LOW', label: 'Low' },
+        ],
+      },
+    },
+    { key: 'createdAt', type: 'datetime', filter: { paramRange: ['createdFrom', 'createdTo'] } },
+    {
+      key: 'assigneeId',
+      type: 'text',
+      filter: { widget: 'relation' },
+      props: { resource: 'users' },
+    },
+  ],
+  list: {
+    tabs: [
+      { key: 'open', label: 'Open', filter: { closed: false } },
+      { key: 'closed', label: 'Closed', filter: { closed: true } },
+    ],
+    filterBar: { savedViews: true },
+  },
+});
+```
+
+| Option                      | Effect                                                                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `tabs`                      | Show above the list. The first tab is the default; others are kept in `?tab=`.                                            |
+| `filterBar`                 | Shows active filters as chips you can clear. With `savedViews`, the current filters can be saved by name in this browser. |
+| `filter.paramRange`         | Sends a range as two params, e.g. `?createdFrom=…&createdTo=…`.                                                           |
+| `filter.multiple: false`    | Makes an enum or relation filter pick a single value.                                                                     |
+| `filter.widget: 'relation'` | Filters a plain id field with a relation picker.                                                                          |
+
 ## Saving
 
 - **Updates send only changed fields.** Set `form.patch: 'full'` to send everything.

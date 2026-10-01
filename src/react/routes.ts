@@ -102,6 +102,8 @@ export function useResourceRouting(
       sort: resource.list.sort,
       fieldTypes: Object.fromEntries(resource.fields.map((f) => [f.key, f.type])),
       fieldParams: { ...resource.ref.params },
+      fieldParamRanges: { ...resource.ref.paramRanges },
+      defaultTab: resource.list.tabs[0]?.key,
     }),
     [resource],
   );

@@ -3,6 +3,23 @@
 All notable changes to this project are documented here. This project follows [Semantic Versioning](https://semver.org/).
 Note: versions `1.0.2` and `1.0.3` can never be published (npm reserved them from an unrelated 2016 package), so the release after `1.0.1` is `1.1.0`.
 
+## 1.0.0-next.1 (unreleased)
+
+Features for apps migrating from config-driven CRUD forks:
+
+- **Lists:**
+  - `list.tabs`: tabs above the list, each with its own filter, kept in `?tab=`.
+  - `list.filterBar`: active-filter chips with clear buttons, plus optional saved views stored in localStorage.
+- **Filters:**
+  - `filter.paramRange: [from, to]` sends a range as two params (REST encoding and `paramUrlCodec`).
+  - `filter.multiple: false` makes an enum or relation filter single-select.
+  - `filter.widget: 'relation'` filters a plain id field with a relation picker.
+- **Access and conditions:**
+  - Access rules accept a function `(record, ctx) => boolean`.
+  - Conditions (`visibleIf`, `requiredIf`, `readOnlyIf`, action conditions) receive the record being edited.
+- **Custom row content:** `components.rowActions` renders it in each row, before the built-in actions.
+- **Routing:** `InstaAdmin` accepts `paths`, for route schemes such as `view/{id}`.
+
 ## 1.0.0-next.0 (unreleased)
 
 The new engine (plan phase R1). **Breaking:** `ItemCrud`, `RelationField`, `getRelationString`, `UI_CONSTANTS` and `formatDate`/`formatDateTime` are removed.

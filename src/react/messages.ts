@@ -34,6 +34,13 @@ export const defaultMessages = {
   invalidJson: 'Invalid JSON',
   notAllowed: 'You do not have access to this',
   notFound: 'Not found',
+  noFilters: 'No filters applied',
+  clearAll: 'Clear all',
+  clearFilter: (label: string) => `Clear ${label} filter`,
+  savedViews: 'Saved views',
+  saveView: 'Save view',
+  viewName: 'View name',
+  deleteView: (name: string) => `Delete view ${name}`,
 };
 
 export type Messages = typeof defaultMessages;

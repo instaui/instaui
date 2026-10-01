@@ -3,7 +3,7 @@
  * resource, driven by its definition and the URL. Embeddable anywhere inside `<InstaProvider>`.
  */
 import { useQueryClient } from '@tanstack/react-query';
-import { Flex, Input, Modal, Result, Spin, Typography } from 'antd';
+import { Flex, Input, Modal, Result, Segmented, Spin, Typography } from 'antd';
 import {
   createElement,
   useCallback,
@@ -31,6 +31,7 @@ import {
   type ConfirmState,
   type ResolvedAction,
 } from './actions.tsx';
+import { FilterBar } from './FilterBar.tsx';
 import { useNotify, type Notify } from './notify.tsx';
 import { Container, ResourceDetail } from './ResourceDetail.tsx';
 import { ResourceForm } from './ResourceForm.tsx';
@@ -181,7 +182,7 @@ export function ResourceCrud({
       ));
 
   const override = (
-    slot: 'page' | 'detail' | 'create' | 'edit',
+    slot: 'page' | 'detail' | 'create' | 'edit' | 'rowActions',
   ): ComponentType<ViewProps> | undefined => {
     const c = resource.components?.[slot];
     if (typeof c === 'function') return c as ComponentType<ViewProps>;
@@ -228,7 +229,11 @@ export function ResourceCrud({
 
   const FormOverride = formMode ? override(formMode) : undefined;
   const DetailOverride = override('detail');
+  const RowActions = override('rowActions');
   const rows = listQuery.data?.data ?? [];
+  const tabs = resource.list.tabs;
+  const hasRowActions =
+    actions.some((a) => a.placement.includes('row')) || RowActions !== undefined;
 
   return (
     <div>
@@ -252,6 +257,29 @@ export function ResourceCrud({
           {actionsFor('toolbar')}
         </Flex>
       </Flex>
+
+      {tabs.length > 1 ? (
+        <Segmented
+          style={{ marginBottom: 12 }}
+          value={list.tab ?? tabs[0]!.key}
+          options={tabs.map((t) => ({ value: t.key, label: t.label }))}
+          onChange={(key) =>
+            routing.setList({
+              ...list,
+              page: 1,
+              tab: key === tabs[0]!.key ? undefined : String(key),
+            })
+          }
+        />
+      ) : null}
+      {resource.list.filterBar ? (
+        <FilterBar
+          resource={resource}
+          list={list}
+          onListChange={routing.setList}
+          savedViews={resource.list.filterBar.savedViews}
+        />
+      ) : null}
 
       {listQuery.isError ? (
         <Result
@@ -277,8 +305,13 @@ export function ResourceCrud({
             : undefined
         }
         renderActions={
-          actions.some((a) => a.placement.includes('row'))
-            ? (r) => <Flex gap={4}>{actionsFor('row', r)}</Flex>
+          hasRowActions
+            ? (r) => (
+                <Flex gap={4} align="center">
+                  {RowActions ? createElement(RowActions, viewProps(r)) : null}
+                  {actionsFor('row', r)}
+                </Flex>
+              )
             : undefined
         }
         basePathOf={basePathOf}

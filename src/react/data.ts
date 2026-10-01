@@ -31,6 +31,14 @@ export function andWhere(...filters: (Where | undefined)[]): Where {
   return present.length === 0 ? {} : present.length === 1 ? present[0]! : { $and: present };
 }
 
+/** The active tab: the one named by `key`, else the first. */
+export function activeTab<T extends { key: string }>(
+  tabs: readonly T[],
+  key: string | undefined,
+): T | undefined {
+  return tabs.find((t) => t.key === key) ?? tabs[0];
+}
+
 export function useResourceList(
   resourceName: string,
   state: ListState,
@@ -41,7 +49,11 @@ export function useResourceList(
   const params = {
     pagination: { mode: 'offset' as const, page: state.page, pageSize: state.pageSize },
     sort: state.sort,
-    filter: andWhere(resource.list.filter, state.filter),
+    filter: andWhere(
+      resource.list.filter,
+      activeTab(resource.list.tabs, state.tab)?.filter,
+      state.filter,
+    ),
     ...(state.search ? { search: state.search } : {}),
   };
   return useQuery({

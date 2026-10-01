@@ -21,6 +21,8 @@ export interface ResourceRef {
   api: ResourceApi;
   /** Query param name per field key, when it differs (from `field.filter.param`). */
   params?: Readonly<Record<string, string>>;
+  /** Two-param ranges per field key (from `field.filter.paramRange`). */
+  paramRanges?: Readonly<Record<string, readonly [string, string]>>;
 }
 
 interface BaseParams {

@@ -8,6 +8,7 @@ test('public runtime exports', () => {
       "CodecError",
       "ConfigError",
       "FieldDisplay",
+      "FilterBar",
       "FilterControl",
       "HttpError",
       "InstaAdmin",

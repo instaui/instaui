@@ -7,12 +7,15 @@ import { Button, Layout, Menu, Result, theme } from 'antd';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { InstaConfigOverride, useInsta } from '../react/context.tsx';
 import { historyAdapter, makeLink } from '../react/router.ts';
+import type { ResourcePaths } from '../react/routes.ts';
 import { ResourceCrud } from './ResourceCrud.tsx';
 
 export interface InstaAdminProps {
   /** URL prefix of the admin (default `''`, i.e. resources at `/{name}`). */
   basePath?: string;
   title?: ReactNode;
+  /** Route scheme for every resource, e.g. `{ detail: 'view/{id}', edit: 'edit/{id}', create: false }`. */
+  paths?: ResourcePaths;
   slots?: { header?: ReactNode; empty?: ReactNode; footer?: ReactNode };
 }
 
@@ -28,7 +31,7 @@ export function InstaAdmin(props: InstaAdminProps) {
 
 const trim = (s: string) => s.replace(/^\/+|\/+$/g, '');
 
-function AdminShell({ basePath = '', title, slots }: InstaAdminProps) {
+function AdminShell({ basePath = '', title, paths, slots }: InstaAdminProps) {
   const { resources, router, messages } = useInsta();
   const api = router.useRouter();
   const { token } = theme.useToken();
@@ -102,6 +105,7 @@ function AdminShell({ basePath = '', title, slots }: InstaAdminProps) {
               resource={active}
               basePath={basePathOf(active)}
               basePathOf={basePathOf}
+              paths={paths}
             />
           ) : menuResources.length === 0 ? (
             (slots?.empty ?? <Result status="info" title={messages.noData} />)

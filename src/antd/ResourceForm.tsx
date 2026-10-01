@@ -69,15 +69,17 @@ export function ResourceForm({
 
   const visibleFields = useMemo(
     () =>
-      resource.fields.filter((f) => f[mode] !== 'hidden' && conditionMet(f.visibleIf, values, ctx)),
-    [resource.fields, mode, values, ctx],
+      resource.fields.filter(
+        (f) => f[mode] !== 'hidden' && conditionMet(f.visibleIf, values, ctx, record),
+      ),
+    [resource.fields, mode, values, ctx, record],
   );
 
   const rulesFor = (field: NormalizedField): Rule[] => {
     const codec = codecFor(field.type, codecs);
     const required =
       field.required ||
-      (field.requiredIf !== undefined && conditionMet(field.requiredIf, values, ctx));
+      (field.requiredIf !== undefined && conditionMet(field.requiredIf, values, ctx, record));
     const rules: Rule[] = [];
     if (required) {
       rules.push({
@@ -152,7 +154,7 @@ export function ResourceForm({
         const Widget = resolveWidget(field, registry);
         const disabled =
           field[mode] === 'readonly' ||
-          (field.readOnlyIf !== undefined && conditionMet(field.readOnlyIf, values, ctx));
+          (field.readOnlyIf !== undefined && conditionMet(field.readOnlyIf, values, ctx, record));
         const params = field.props.params
           ? resolveVars(field.props.params, { values, ctx })
           : undefined;

@@ -20,6 +20,8 @@ export interface ListState {
   sort: SortSpec[];
   filter: Where;
   search?: string;
+  /** Active list tab key (omitted for the first/default tab). */
+  tab?: string;
 }
 
 export interface ListDefaults {
@@ -29,6 +31,10 @@ export interface ListDefaults {
   fieldTypes?: Record<string, string>;
   /** Query param name per field key (`field.filter.param`), for codecs that mirror the API query. */
   fieldParams?: Record<string, string>;
+  /** Two-param ranges per field key (`field.filter.paramRange`). */
+  fieldParamRanges?: Record<string, readonly [string, string]>;
+  /** The first tab's key: a missing `tab` param means this tab. */
+  defaultTab?: string;
 }
 
 export interface UrlCodec {
@@ -81,12 +87,14 @@ export const defaultUrlCodec: UrlCodec = {
           )
       : (defaults.sort ?? []);
     const query = params.get('q') ?? undefined;
+    const tab = params.get('tab') ?? undefined;
     return {
       page: positiveInt(params.get('page'), 1),
       pageSize: positiveInt(params.get('pageSize'), defaults.pageSize),
       sort,
       filter: fromConditions(conditions),
       ...(query ? { search: query } : {}),
+      ...(tab && tab !== defaults.defaultTab ? { tab } : {}),
     };
   },
 
@@ -107,6 +115,7 @@ export const defaultUrlCodec: UrlCodec = {
       params.set(op === '$eq' ? `f.${field}` : `f.${field}.${op.slice(1)}`, encodeValue(value));
     }
     if (state.search) params.set('q', state.search);
+    if (state.tab && state.tab !== defaults.defaultTab) params.set('tab', state.tab);
     const text = params.toString();
     return text ? `?${text}` : '';
   },
@@ -118,6 +127,7 @@ export interface ParamUrlCodecOptions {
   sort?: string;
   order?: string;
   search?: string;
+  tab?: string;
 }
 
 /**
@@ -130,8 +140,9 @@ export function paramUrlCodec({
   sort = 'sort',
   order = 'order',
   search = 'q',
+  tab = 'tab',
 }: ParamUrlCodecOptions = {}): UrlCodec {
-  const reserved = new Set([page, pageSize, sort, order, search]);
+  const reserved = new Set([page, pageSize, sort, order, search, tab]);
   const BRACKET = /^(.+)\[([a-zA-Z]+)\]$/;
   return {
     parse(query, defaults) {
@@ -139,8 +150,22 @@ export function paramUrlCodec({
       const fields = Object.keys(defaults.fieldTypes ?? {});
       const byParam = new Map(fields.map((f) => [defaults.fieldParams?.[f] ?? f, f]));
       const conditions: Condition[] = [];
+      const rangeByParam = new Map<string, { field: string; op: Operator }>();
+      for (const [field, [from, to]] of Object.entries(defaults.fieldParamRanges ?? {})) {
+        rangeByParam.set(from, { field, op: '$gte' });
+        rangeByParam.set(to, { field, op: '$lte' });
+      }
       for (const [key, raw] of params) {
         if (reserved.has(key)) continue;
+        const ranged = rangeByParam.get(key);
+        if (ranged) {
+          conditions.push({
+            field: ranged.field,
+            op: ranged.op,
+            value: coerce(raw, defaults.fieldTypes?.[ranged.field], ranged.op),
+          });
+          continue;
+        }
         const m = BRACKET.exec(key);
         const field = byParam.get(m ? m[1]! : key);
         if (!field) continue; // undeclared params are ignored
@@ -157,6 +182,7 @@ export function paramUrlCodec({
         : undefined;
       const orders = (params.get(order) ?? '').split(',');
       const q = params.get(search) ?? undefined;
+      const activeTab = params.get(tab) ?? undefined;
       return {
         page: positiveInt(params.get(page), 1),
         pageSize: positiveInt(params.get(pageSize), defaults.pageSize),
@@ -168,6 +194,7 @@ export function paramUrlCodec({
           : (defaults.sort ?? []),
         filter: fromConditions(conditions),
         ...(q ? { search: q } : {}),
+        ...(activeTab && activeTab !== defaults.defaultTab ? { tab: activeTab } : {}),
       };
     },
     stringify(state, defaults) {
@@ -182,10 +209,22 @@ export function paramUrlCodec({
       for (const { field, op, value } of toConditions(state.filter)) {
         if (value === undefined || value === '' || (Array.isArray(value) && value.length === 0))
           continue;
+        const range = defaults.fieldParamRanges?.[field];
+        if (range && (op === '$gte' || op === '$lte')) {
+          params.set(op === '$gte' ? range[0] : range[1], encodeValue(value));
+          continue;
+        }
+        if (range && op === '$between') {
+          const [lo, hi] = value as [unknown, unknown];
+          params.set(range[0], encodeValue(lo));
+          params.set(range[1], encodeValue(hi));
+          continue;
+        }
         const name = defaults.fieldParams?.[field] ?? field;
         params.set(op === '$eq' ? name : `${name}[${op.slice(1)}]`, encodeValue(value));
       }
       if (state.search) params.set(search, state.search);
+      if (state.tab && state.tab !== defaults.defaultTab) params.set(tab, state.tab);
       const text = params.toString();
       return text ? `?${text}` : '';
     },

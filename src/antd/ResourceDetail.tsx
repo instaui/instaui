@@ -19,7 +19,7 @@ export function ResourceDetail({
 }) {
   const { ctx } = useInsta();
   const fields = useMemo(
-    () => resource.fields.filter((f) => f.detail && conditionMet(f.visibleIf, record, ctx)),
+    () => resource.fields.filter((f) => f.detail && conditionMet(f.visibleIf, record, ctx, record)),
     [resource.fields, record, ctx],
   );
   const rows = useMemo(() => [record], [record]);
