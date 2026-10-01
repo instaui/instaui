@@ -1,4 +1,4 @@
-import type {FormInstance, Rule} from 'antd/es/form';
+import type {FormInstance, FormRule as Rule} from '../antdTypes.ts';
 
 import type {ReactNode} from 'react';
 

@@ -1,9 +1,9 @@
-import {Item, RelationFieldProps} from "./types";
+import type {Item, RelationFieldProps} from "./types.ts";
 import React, {useCallback, useEffect, useState} from "react";
 import {Form, message, Select, Spin} from "antd";
-import {UI_CONSTANTS} from "../constants";
-import type {NamePath} from "antd/es/form/interface";
-import debounce from 'lodash/debounce';
+import {UI_CONSTANTS} from "../constants.ts";
+import type {NamePath} from "../antdTypes.ts";
+import {debounce} from '../utils/debounce.ts';
 
 /**
  * RelationField component for selecting related entities
@@ -136,7 +136,7 @@ export const RelationField: React.FC<RelationFieldProps> = ({
 						} else {
 							// Last resort: use first non-object property
 							const firstProp = Object.entries(item)
-								.find(([_, val]) => val !== null && typeof val !== 'object');
+								.find(([, val]) => val !== null && typeof val !== 'object');
 							
 							if (firstProp) {
 								label = String(firstProp[1]);
@@ -167,7 +167,6 @@ export const RelationField: React.FC<RelationFieldProps> = ({
 				total: total || 0, // Ensure total is always a number
 			}));
 		} catch (error) {
-			console.error('Error fetching relation options:', error);
 			const {message: errMessage} = error as { message: string };
 			message.error(errMessage ?? UI_CONSTANTS.MODAL_MESSAGES.FAILED_TO_LOAD_RELATION);
 			

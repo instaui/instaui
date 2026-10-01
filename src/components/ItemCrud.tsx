@@ -27,28 +27,28 @@ import {
 	MenuUnfoldOutlined,
 	PictureOutlined,
 } from '@ant-design/icons';
-import {EndpointConfig, FieldConfig, Item, ItemCrudProps} from './types';
+import type {EndpointConfig, FieldConfig, Item, ItemCrudProps} from './types.ts';
 import type {
 	FilterDropdownProps,
 	FilterValue,
 	SorterResult,
 	SortOrder,
 	TablePaginationConfig,
-} from 'antd/es/table/interface';
+} from '../antdTypes.ts';
 import type {ReactNode} from 'react';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import type {UploadChangeParam, UploadFile} from 'antd/es/upload/interface';
-import {formatDate, formatDateTime} from '../utils/dateFormat';
+import type {UploadChangeParam, UploadFile} from '../antdTypes.ts';
+import {formatDate, formatDateTime} from '../utils/dateFormat.ts';
 import {useLocation, useNavigate, useParams} from 'react-router-dom';
 
-import type {NamePath} from 'antd/es/form/interface';
-import {RelationField} from './RelationField';
-import type {Rule} from 'antd/es/form';
-import {UI_CONSTANTS} from '../constants';
+import type {NamePath} from '../antdTypes.ts';
+import {RelationField} from './RelationField.tsx';
+import type {FormRule as Rule} from '../antdTypes.ts';
+import {UI_CONSTANTS} from '../constants.ts';
 import dayjs from 'dayjs';
-import {getRelationString} from './GetRelationString';
-import timezone from 'dayjs/plugin/timezone';
-import utc from 'dayjs/plugin/utc';
+import {getRelationString} from './GetRelationString.tsx';
+import timezone from 'dayjs/plugin/timezone.js';
+import utc from 'dayjs/plugin/utc.js';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);

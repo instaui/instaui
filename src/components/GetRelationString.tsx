@@ -1,4 +1,4 @@
-import {Item, RelationConfig} from "./types";
+import type {Item, RelationConfig} from "./types.ts";
 import React from 'react';
 
 export const getRelationString = (relation: RelationConfig, value: Item) => {
