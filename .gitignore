@@ -25,3 +25,4 @@ coverage/
 # local env
 .env
 .env.*
+.docs-check/

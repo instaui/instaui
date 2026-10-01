@@ -11,6 +11,7 @@
 | `yarn typecheck`            | Type-check `src`, `test` and configs                          |
 | `yarn lint` / `yarn format` | ESLint / Prettier                                             |
 | `yarn test`                 | Vitest (jsdom). Unmocked network requests fail the test.      |
+| `yarn check:docs`           | Type-check every `tsx` example in `docs/` against the source  |
 | `yarn check:package`        | `npm pack`, then publint + attw on the tarball                |
 | `yarn check:version`        | semver validity, burned versions, tag ↔ version match         |
 

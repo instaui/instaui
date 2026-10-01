@@ -51,6 +51,8 @@ export const App = () => (
 - **Using an existing axios-style client:** `fromApiClient(apiClient, { decodeList, encodeList })`.
 - **Tests and demos:** `createMemoryProvider(seed)`.
 
+Read the [documentation](docs/README.md) for resources, fields, `Where`, data providers, routing, actions, access and escape hatches.
+
 ## What 1.0 will be
 
 - **One definition drives everything:** list columns, URL-synced filters and sorting, create and edit forms, the detail view, row, bulk and toolbar actions, and access rules.

@@ -55,7 +55,8 @@
     "check:version": "node scripts/check-version.mjs",
     "check:package": "node scripts/check-package.mjs",
     "prepack": "yarn build",
-    "ci": "yarn lint && yarn format:check && yarn typecheck && yarn test && yarn check:version && yarn check:package"
+    "ci": "yarn lint && yarn format:check && yarn typecheck && yarn test && yarn check:docs && yarn check:version && yarn check:package",
+    "check:docs": "node scripts/check-docs.mjs"
   },
   "peerDependencies": {
     "@ant-design/icons": "^5.6.0 || ^6.0.0",
@@ -75,6 +76,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "antd": "^6.6.5",
+    "axios": "^1",
     "dayjs": "^1.11.23",
     "eslint": "^10.11.0",
     "eslint-plugin-react-hooks": "^7.1.1",
