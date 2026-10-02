@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import { afterAll, describe, expect, test } from 'vitest';
+import { actionDialogText, actionDisabled, actionVisible, resolveActions } from './actions.ts';
 import { builtinCodecs, CodecError, type CodecContext } from './codecs.ts';
 import { recordLabel } from './label.ts';
 import { defaultUrlCodec } from './list-state.ts';
@@ -232,5 +233,58 @@ describe('defaultUrlCodec', () => {
       withSort,
     );
     expect(defaultUrlCodec.parse(url, withSort).sort).toEqual([]);
+  });
+});
+
+describe('actions', () => {
+  const resource = normalizeResource(
+    defineResource({
+      name: 'orders',
+      fields: [{ key: 'status', type: 'text' }],
+      actions: [
+        'edit',
+        { builtin: 'delete', confirm: { typeToConfirm: 'DELETE' } },
+        {
+          id: 'ship',
+          label: 'Ship',
+          placement: ['row', 'bulk'],
+          visibleIf: { status: 'PAID' },
+          disabledIf: (r) => r.hold === true,
+          confirm: { title: ({ selection }) => `Ship ${selection?.length ?? 1}?` },
+          run: () => undefined,
+        },
+      ],
+    }),
+  );
+  const labels = { create: 'Create', detail: 'View', edit: 'Edit', delete: 'Delete' };
+  const [edit, remove, ship] = resolveActions(resource, labels);
+  const forDelete = { title: 'Delete this order?', description: 'Gone.', okText: 'Delete' };
+
+  test('built-ins get labels, placements and a confirm for delete', () => {
+    expect(edit).toMatchObject({ key: 'edit', label: 'Edit', placement: ['row', 'detail'] });
+    expect(edit!.confirm).toBeUndefined();
+    expect(remove).toMatchObject({ key: 'delete', danger: true, placement: ['row', 'detail'] });
+  });
+
+  test('visibility needs access and visibleIf; disabledIf disables', () => {
+    const all = () => true;
+    expect(actionVisible(ship!, { status: 'PAID' }, all, {})).toBe(true);
+    expect(actionVisible(ship!, { status: 'NEW' }, all, {})).toBe(false);
+    expect(actionVisible(ship!, { status: 'PAID' }, () => false, {})).toBe(false);
+    expect(actionDisabled(ship!, { status: 'PAID', hold: true }, {})).toBe(true);
+    expect(actionDisabled(edit!, {}, {})).toBe(false);
+  });
+
+  test('dialog text: confirm first, then the defaults; delete has its own', () => {
+    expect(actionDialogText(remove!, {}, forDelete)).toEqual({
+      ...forDelete,
+      typeToConfirm: 'DELETE',
+      danger: true,
+    });
+    expect(actionDialogText(ship!, { selection: [{}, {}] }, forDelete)).toMatchObject({
+      title: 'Ship 2?',
+      okText: 'Ship',
+      danger: false,
+    });
   });
 });

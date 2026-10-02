@@ -1,6 +1,7 @@
 import { Button, Flex, Typography } from 'antd';
 import { useInsta } from '../../react/context.tsx';
-import { ActionButton, type ResolvedAction } from '../actions.tsx';
+import type { ResolvedAction } from '../../core/actions.ts';
+import { ActionButton } from '../actions.tsx';
 
 /** "N selected", the bulk actions, and clear. */
 export function BulkBar({

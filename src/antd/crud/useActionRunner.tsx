@@ -8,29 +8,24 @@ import { recordId, type AnyRecord } from '../../core/data-provider.ts';
 import { errorMessage } from '../../core/http-error.ts';
 import type { NormalizedResource } from '../../core/resource.ts';
 import {
-  actionText,
+  actionDialogText,
+  actionDisabled,
+  actionVisible,
+  isCustom,
+  resolveActions,
   type ActionContext,
-  type ActionDefinition,
   type ActionTarget,
+  type CustomAction,
   type OpenResourceOptions,
+  type ResolvedAction,
 } from '../../core/actions.ts';
 import { useCan } from '../../react/access.ts';
 import { useInsta } from '../../react/context.tsx';
 import { useResourceMutations } from '../../react/data.ts';
 import type { ResourceRouting } from '../../react/routes.ts';
 import { ActionForm } from '../ActionForm.tsx';
-import {
-  ActionButton,
-  actionDisabled,
-  actionVisible,
-  ConfirmDialog,
-  resolveActions,
-  type ConfirmState,
-  type ResolvedAction,
-} from '../actions.tsx';
+import { ActionButton, ConfirmDialog, type ConfirmState } from '../actions.tsx';
 import type { Notify } from '../notify.tsx';
-
-type CustomAction = ResolvedAction & { custom: ActionDefinition };
 
 interface FormRun {
   action: CustomAction;
@@ -74,7 +69,16 @@ export function useActionRunner({
   const [confirm, setConfirm] = useState<ConfirmState>();
   const [formRun, setFormRun] = useState<FormRun>();
   const [opened, setOpened] = useState<Opened>();
-  const actions = useMemo(() => resolveActions(resource, messages), [resource, messages]);
+  const actions = useMemo(
+    () =>
+      resolveActions(resource, {
+        create: messages.create,
+        detail: messages.view,
+        edit: messages.edit,
+        delete: messages.delete,
+      }),
+    [resource, messages],
+  );
 
   const contextFor = (record?: AnyRecord, selection?: AnyRecord[]): ActionContext => ({
     record,
@@ -111,37 +115,26 @@ export function useActionRunner({
     if (rowsOnPage <= 1 && list.page > 1) routing.setList({ ...list, page: list.page - 1 });
   };
 
-  /** The dialog text of an action for this target: its `confirm`, else defaults. */
-  const dialogText = (action: ResolvedAction, target: ActionTarget) => {
-    const options = typeof action.confirm === 'object' ? action.confirm : {};
-    const isDelete = action.builtin === 'delete';
-    return {
-      title:
-        actionText(options.title, target) ??
-        (isDelete ? messages.deleteConfirmTitle(resource.label.one.toLowerCase()) : action.label),
-      description:
-        actionText(options.description, target) ??
-        (isDelete ? messages.deleteConfirmDescription : undefined),
-      typeToConfirm: options.typeToConfirm,
-      okText: actionText(options.okText, target) ?? (isDelete ? messages.delete : action.label),
-      danger: options.danger ?? action.danger ?? false,
-    };
-  };
+  const dialogText = (action: ResolvedAction, target: ActionTarget) =>
+    actionDialogText(action, target, {
+      title: messages.deleteConfirmTitle(resource.label.one.toLowerCase()),
+      description: messages.deleteConfirmDescription,
+      okText: messages.delete,
+    });
 
   const run = (action: ResolvedAction, record?: AnyRecord, selection?: AnyRecord[]) => {
     const id = record ? recordId(resource.ref, record) : undefined;
     if (action.builtin === 'create') return routing.openCreate();
     if (action.builtin === 'detail' && id !== undefined) return routing.openDetail(id);
     if (action.builtin === 'edit' && id !== undefined) return routing.openEdit(id);
-    if (action.custom?.form)
-      return setFormRun({ action: action as CustomAction, record, selection });
+    if (isCustom(action) && action.custom.form) return setFormRun({ action, record, selection });
 
     const exec = async () => {
       try {
         if (action.builtin === 'delete' && record) await remove_(record);
-        else if (action.custom) {
+        else if (isCustom(action)) {
           await action.custom.run(contextFor(record, selection));
-          await settle(action as CustomAction, selection);
+          await settle(action, selection);
         }
       } catch (error) {
         notify.error(
