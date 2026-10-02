@@ -1,0 +1,60 @@
+name: Release
+
+# Publishes to npm with trusted publishing (OIDC) and provenance.
+# One-time setup on npmjs.com → package settings → Trusted publishing:
+#   GitHub repository instaui/instaui, workflow file "release.yml".
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Run npm publish --dry-run only'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  id-token: write # required for npm trusted publishing and provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24 # bundles npm 11; trusted publishing needs npm >= 11.5.1
+          registry-url: https://registry.npmjs.org
+      - run: corepack enable
+      - run: npm --version
+      - run: yarn install --immutable
+      - run: yarn ci
+      - name: Verify tag matches version
+        if: github.event_name == 'push'
+        run: yarn check:version
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+      - name: Choose dist-tag
+        id: tag
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if [[ "$version" == *-* ]]; then echo "dist=next" >> "$GITHUB_OUTPUT"; else echo "dist=latest" >> "$GITHUB_OUTPUT"; fi
+      # Makes tag pushes idempotent: a version published manually is not published again.
+      - name: Check whether this version is already on npm
+        id: published
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if npm view "instaui@$version" version >/dev/null 2>&1; then
+            echo "instaui@$version is already published; skipping publish."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+      # Published with npm, not Yarn: Yarn 4.9 has no OIDC support.
+      - name: Publish
+        if: github.event_name == 'push' && steps.published.outputs.exists == 'false'
+        run: npm publish --provenance --tag ${{ steps.tag.outputs.dist }}
+      - name: Publish (dry run)
+        if: github.event_name == 'workflow_dispatch'
+        run: npm publish --dry-run --tag ${{ steps.tag.outputs.dist }}

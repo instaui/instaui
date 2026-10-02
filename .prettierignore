@@ -1,0 +1,7 @@
+dist
+coverage
+node_modules
+.yarn
+yarn.lock
+UPGRADE_PLAN.md
+.docs-check

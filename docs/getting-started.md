@@ -1,190 +1,132 @@
-# Getting Started with instaui
+# Getting started
 
-This guide will help you get started with instaui, a zero-code CRUD UI generator for React.
-
-## Installation
-
-Install `instaui` with npm or Yarn:
+## Install
 
 ```bash
-npm install instaui
-# or
-yarn add instaui
+npm install instaui @tanstack/react-query
 ```
 
-### Dependencies
+Peer dependencies: `react` and `react-dom` (`^18.2 || ^19`), `antd` (`^5.25 || ^6`), `@ant-design/icons` (`^5.6 || ^6`), `dayjs` (`^1.11`) and `@tanstack/react-query` (`^5.90`). The package is ESM-only.
 
-`instaui` requires the following peer dependencies:
+Notes:
 
-- React 17+
-- React DOM 17+
+- **antd 5 on React 19:** install and import `@ant-design/v5-patch-for-react-19` in your app. instaui never imports it.
+- **Jest:** add `instaui` to the `transformIgnorePatterns` exceptions, because the package is ESM-only.
+- **Linked local checkout:** make your bundler dedupe the peers. For Vite, use `resolve.dedupe: ['react', 'react-dom', 'antd', '@ant-design/icons', 'dayjs']`.
 
-And uses the following libraries:
+## An app from an API client and config
 
-- antd 5.11.0+
-- axios 1.6.0+
-- react-router-dom 6.20.0+
-- dayjs 1.11.10+
+`InstaApp` is a whole admin app: give it your HTTP client and your resource definitions.
 
-Make sure these dependencies are installed in your project.
-
-## Basic Setup
-
-Here's a basic example of how to use `instaui`:
-
-```jsx
-import { ItemCrud } from 'instaui';
+```tsx
 import axios from 'axios';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { InstaApp, defineResource } from 'instaui';
 
-// Create an API client
-const apiClient = axios.create({
-  baseURL: 'http://localhost:3000',
-  headers: {
-    Authorization: 'Bearer your-token',
-    'Content-Type': 'application/json',
-  },
-});
-
-// Define your endpoints configuration
-const endpoints = [
-  {
-    key: 'users',
-    label: 'Users',
-    url: '/users',
-    idField: 'id',
-    fields: [
-      {
-        key: 'id',
-        label: 'ID',
-        type: 'text',
-        required: true,
-        readOnly: true,
-        showInList: true,
-      },
-      {
-        key: 'name',
-        label: 'Name',
-        type: 'text',
-        required: true,
-        showInList: true,
-        patchable: true,
-        postable: true,
-      },
-      {
-        key: 'email',
-        label: 'Email',
-        type: 'email',
-        required: true,
-        showInList: true,
-        patchable: true,
-        postable: true,
-      },
-    ],
-    validator: (values) => {
-      const errors = {};
-      if (!values.name) errors.name = 'Name is required';
-      if (!values.email) errors.email = 'Email is required';
-      return errors;
-    },
-  },
-];
-
-function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/users" replace />} />
-        <Route
-          path="/:entity"
-          element={
-            <ItemCrud
-              apiClient={apiClient}
-              config={{ endpoints }}
-              useDrawer={false} // Use modal instead of drawer
-            />
-          }
-        />
-        <Route
-          path="/:entity/:operation/:id"
-          element={
-            <ItemCrud
-              apiClient={apiClient}
-              config={{ endpoints }}
-              useDrawer={false}
-            />
-          }
-        />
-      </Routes>
-    </BrowserRouter>
-  );
-}
-
-export default App;
-```
-
-## API Client Configuration
-
-instaui expects an API client that conforms to a specific interface. If your API doesn't match this interface, you can
-create an adapter:
-
-```jsx
-const createApiClient = (axiosInstance) => {
-  return {
-    get: async (url, config) => {
-      const response = await axiosInstance.get(url, config);
-      return { status: 'success', data: response.data };
-    },
-    post: async (url, data, config) => {
-      const response = await axiosInstance.post(url, data, config);
-      return { status: 'success', data: response.data };
-    },
-    patch: async (url, data, config) => {
-      const response = await axiosInstance.patch(url, data, config);
-      return { status: 'success', data: response.data };
-    },
-    delete: async (url, config) => {
-      const response = await axiosInstance.delete(url, config);
-      return { status: 'success', data: response.data };
-    },
-  };
+const http = axios.create({ baseURL: '/api' });
+const apiClient = {
+  get: (url: string, config?: object) => http.get(url, config).then((r) => r.data),
+  post: (url: string, data?: unknown) => http.post(url, data).then((r) => r.data),
+  patch: (url: string, data?: unknown) => http.patch(url, data).then((r) => r.data),
+  delete: (url: string) => http.delete(url).then((r) => r.data),
 };
 
-// Usage
-const apiClient = createApiClient(axiosInstance);
+const customers = defineResource({
+  name: 'customers',
+  recordLabel: '{name}',
+  fields: [
+    { key: 'name', type: 'text', required: true, filter: true },
+    { key: 'email', type: 'text' },
+  ],
+});
+
+export const App = () => (
+  <InstaApp title="Backoffice" apiClient={apiClient} resources={[customers]} />
+);
 ```
 
-### Expected API Response Format
+`InstaApp` routes with the browser URL and builds the data provider from the client. If your API's query parameters or envelopes differ from the defaults, pass them once as `rest={{ encodeList, decodeList, … }}` (see [Data providers](data-providers.md)).
 
-The API client should return responses in the following format:
+### Custom views
 
-```json
-{
-  "status": "success",
-  "data": {
-    "items": [...],  // or "data", "results", etc.
-    "total": 100     // or "count", etc.
-  }
+A screen with its own design is a resource too, so it gets a menu entry and a route. Use `kind: 'page'` for a whole screen, or `components.detail` / `create` / `edit` / `rowActions` to replace one view. Custom views make their own requests with the app's client:
+
+```tsx
+import { useApiClient, defineResource } from 'instaui';
+import { useEffect, useState } from 'react';
+
+type Client = { get(url: string): Promise<{ data: { total: number } }> };
+
+function Overview() {
+  const api = useApiClient<Client>();
+  const [total, setTotal] = useState<number>();
+  useEffect(() => void api.get('stats').then((r) => setTotal(r.data.total)), [api]);
+  return <p>{total ?? '…'} customers</p>;
+}
+
+export const overview = defineResource({
+  name: 'overview',
+  kind: 'page',
+  fields: [],
+  components: { page: Overview },
+});
+```
+
+## A first admin, step by step
+
+```tsx
+import { InstaAdmin, InstaProvider, createMemoryProvider, defineResource } from 'instaui';
+
+const books = defineResource({
+  name: 'books',
+  recordLabel: '{title}',
+  fields: [
+    { key: 'title', type: 'text', required: true, list: { sortable: true }, filter: true },
+    { key: 'pages', type: 'number', props: { min: 1 } },
+    { key: 'publishedOn', type: 'date' },
+    { key: 'authorId', type: 'relation', props: { resource: 'authors' }, filter: true },
+  ],
+});
+const authors = defineResource({
+  name: 'authors',
+  fields: [{ key: 'name', type: 'text', required: true }],
+});
+
+const dataProvider = createMemoryProvider({
+  authors: [{ id: 1, name: 'Ursula K. Le Guin' }],
+  books: [{ id: 1, title: 'The Dispossessed', pages: 387, publishedOn: '1974-05-01', authorId: 1 }],
+});
+
+export function App() {
+  return (
+    <InstaProvider dataProvider={dataProvider} resources={[books, authors]}>
+      <InstaAdmin title="Library" />
+    </InstaProvider>
+  );
 }
 ```
 
-For single item responses:
+What you get:
 
-```json
-{
-  "status": "success",
-  "data": {
-    "id": "1",
-    "name": "Example",
-    ...
-  }
-}
+- A menu with **Books** and **Authors**.
+- A sortable, filterable, paginated list, synced to the URL.
+- A detail drawer and create/edit forms with validation.
+- Delete with confirmation.
+- Relation pickers that search on the server.
+
+Replace `createMemoryProvider` with `createRestProvider({ baseUrl: '/api' })` to talk to your API (see [Data providers](data-providers.md)).
+
+## One resource, anywhere
+
+`InstaApp` is `InstaProvider` + `InstaAdmin`, and both are optional. To embed a single resource in your own layout, render `ResourceCrud`:
+
+```tsx
+import { InstaProvider, ResourceCrud, createRestProvider, defineResource } from 'instaui';
+
+const tickets = defineResource({ name: 'tickets', fields: [{ key: 'subject', type: 'text' }] });
+
+export const Tickets = () => (
+  <InstaProvider dataProvider={createRestProvider({ baseUrl: '/api' })} resources={[tickets]}>
+    <ResourceCrud resource="tickets" />
+  </InstaProvider>
+);
 ```
-
-## Next Steps
-
-Now that you have a basic setup, you can:
-
-- [Configure your endpoints](./configuration.md) with more advanced options
-- [Customize the rendering](./custom-rendering.md) of your fields and components
-- [Explore the examples](./examples.md) for more advanced use cases

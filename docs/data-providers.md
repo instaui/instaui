@@ -1,0 +1,184 @@
+# Data providers
+
+instaui talks to your backend through a `DataProvider`: `getList`, `getOne`, `getMany?`, `create`, `update`, `deleteOne` and `custom` (for anything else, such as bulk endpoints).
+
+## REST
+
+```tsx
+import { createRestProvider } from 'instaui';
+
+export const api = createRestProvider({
+  baseUrl: 'https://api.example.com/v1',
+  headers: () => ({ Authorization: `Bearer ${localStorage.getItem('token') ?? ''}` }),
+});
+```
+
+Default conventions:
+
+| Operation                | Request                                                                               |
+| ------------------------ | ------------------------------------------------------------------------------------- |
+| List                     | `GET {path}?page=1&pageSize=20&sort=name&order=asc&status=OPEN&amount[gte]=10&q=text` |
+| One                      | `GET {path}/{id}` (ids are always URL-encoded)                                        |
+| Create / update / delete | `POST {path}`, `PATCH {path}/{id}`, `DELETE {path}/{id}`                              |
+
+- **`{path}`** is `resource.api.path`, which defaults to the resource name and can contain `{ctx.x}` placeholders, for example `'orgs/{ctx.orgId}/projects'`.
+- **Request bodies** are JSON. They switch to multipart only when a value is a `File` or `Blob`.
+- **Errors** are thrown as `HttpError`, and its `errors` become field errors.
+- **List responses** may be an array, or `{ data | items | results, total | count }`. A keyed envelope is selected with `resource.api.listKey`. Unrecognised shapes throw a clear error.
+
+Every convention is a small function you can replace: `urlFor`, `encodeList`, `decodeList`, `decodeOne`, `encodeBody`, `mapError`, plus `request` itself.
+
+```tsx
+import { createRestProvider, defaultEncodeList, type ListParams } from 'instaui';
+
+export const api = createRestProvider({
+  baseUrl: '/api',
+  // This backend uses offset/limit and wraps lists as { rows, totalCount }.
+  encodeList: (params: ListParams) => {
+    const { page, pageSize, ...rest } = defaultEncodeList(params);
+    return { ...rest, offset: (Number(page) - 1) * Number(pageSize), limit: pageSize };
+  },
+  decodeList: (raw) => {
+    const body = raw as { rows: Record<string, unknown>[]; totalCount: number };
+    return { data: body.rows, total: body.totalCount };
+  },
+});
+```
+
+## An existing HTTP client
+
+`fromApiClient` adapts an axios-style client: `get`, `post`, `patch`, `delete` (and optionally `put`) that resolve to the parsed body. All other options work as above. Errors with a `response.status` (axios errors) become `HttpError`s; any other error, such as one your interceptor throws, is shown with its own message.
+
+```tsx
+import axios from 'axios';
+import { fromApiClient } from 'instaui';
+
+const http = axios.create({ baseURL: '/api' });
+
+export const api = fromApiClient({
+  get: (url, config) => http.get(url, config).then((r) => r.data),
+  post: (url, data, config) => http.post(url, data, config).then((r) => r.data),
+  patch: (url, data, config) => http.patch(url, data, config).then((r) => r.data),
+  delete: (url, config) => http.delete(url, config).then((r) => r.data),
+});
+```
+
+## Fitting an existing API
+
+Most backends differ from the defaults in a few ways: other parameter names, one search box, keyed envelopes, a missing route. You adapt the provider, never the resources.
+
+### What `encodeList` receives
+
+`encodeList(params)` turns a `ListParams` into query parameters:
+
+| Field                  | Contents                                                                                                 |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- |
+| `pagination`           | `{ mode: 'offset', page, pageSize }`, `{ mode: 'cursor', … }` or `{ mode: 'off' }`                       |
+| `sort`                 | `[{ field, order: 'asc' \| 'desc' }]`                                                                    |
+| `filter`               | A [`Where`](where.md). `toConditions(filter, { ctx })` flattens it to `{ field, op, value }` conditions. |
+| `search`               | Text typed in a relation picker or the list search box                                                   |
+| `meta.searchFields`    | The relation field's `props.searchFields`, when set                                                      |
+| `resource.params`      | `filter.param` renames, by field key                                                                     |
+| `resource.paramRanges` | `filter.paramRange` pairs, by field key                                                                  |
+| `resource.api`         | The resource's `api` object, **passed through untouched**, so it can carry your own per-resource options |
+
+Filter controls produce `$eq` and `$in` (enums, relations, booleans), `$between` (dates), `$gte`/`$lte` (numbers) and `$contains` (text). A condition whose `{ $var: … }` has nothing to resolve to, such as a dependent picker before its parent is chosen, arrives with `value: undefined`. Skip it.
+
+This backend reads `limit` instead of `pageSize`, searches one column at a time (`column` + `search`), takes lists as `a,b`, and wraps each list under the resource's name:
+
+```tsx
+import {
+  fromApiClient,
+  toConditions,
+  type ApiClientLike,
+  type ListParams,
+  type QueryValue,
+} from 'instaui';
+
+const join = (v: unknown) => (Array.isArray(v) ? v.map(String).join(',') : String(v));
+
+export function encodeList(params: ListParams): Record<string, QueryValue> {
+  const query: Record<string, QueryValue> = {};
+  const { resource } = params;
+  if (params.pagination.mode === 'offset') {
+    query.page = params.pagination.page;
+    query.limit = Math.min(params.pagination.pageSize, 100);
+  }
+  const [sort] = params.sort;
+  if (sort) Object.assign(query, { sortBy: sort.field, sortOrder: sort.order });
+
+  for (const { field, op, value } of toConditions(params.filter, { ctx: params.ctx })) {
+    if (value === undefined || value === null) continue; // unresolved $var: no filter
+    const range = resource.paramRanges?.[field];
+    if (range && (op === '$gte' || op === '$lte' || op === '$between')) {
+      const [lo, hi] =
+        op === '$between' ? (value as unknown[]) : op === '$gte' ? [value] : [undefined, value];
+      if (lo !== undefined) query[range[0]] = join(lo);
+      if (hi !== undefined) query[range[1]] = join(hi);
+    } else if (op === '$contains') {
+      query.column = resource.params?.[field] ?? field;
+      query.search = String(value);
+    } else {
+      query[resource.params?.[field] ?? field] = join(value);
+    }
+  }
+  // A per-resource option of ours, read from `api`: which column picker text searches.
+  const column = (params.meta?.searchFields ?? resource.api.searchColumns) as string[] | undefined;
+  if (params.search && column?.[0])
+    Object.assign(query, { column: column[0], search: params.search });
+  return query;
+}
+
+export const makeProvider = (client: ApiClientLike) => fromApiClient(client, { encodeList });
+
+// A resource then names its envelope key and its search column:
+// api: { path: 'customers', listKey: 'customers', searchColumns: ['name'] }
+```
+
+### Routes the backend doesn't have
+
+Two `api` options cover the usual gaps, for any provider made with `createRestProvider` or `fromApiClient` (wrap other providers with `withListFallbacks`):
+
+| Option                     | Use when                                                                                   | What instaui does                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `lookup: 'list'`           | There is no `GET {path}/{id}`                                                              | Finds records by id by paging through the list (100 rows a page, up to 5,000 rows) |
+| `lookup: { search: 'id' }` | GET-one is missing or more restricted than the list, but the list can search the id column | Searches the list for the id                                                       |
+| `search: 'client'`         | The list cannot search                                                                     | Filters the first 100 rows by the typed text, in the browser                       |
+
+Relation labels need one record per id, so they use the same lookup. A provider's own `getMany` is used when it has one and the resource has no `lookup`.
+
+```tsx
+import { defineResource } from 'instaui';
+
+// GET /regions lists them all; there is no GET /regions/:id and no search.
+export const regions = defineResource({
+  name: 'regions',
+  api: { lookup: 'list', search: 'client' },
+  recordLabel: '{name}',
+  fields: [{ key: 'name', type: 'text' }],
+});
+```
+
+For a missing **update or delete** route, don't offer the action: `actions: ['create', 'detail']` or `access: { edit: false }` (see [Actions and access](actions-and-access.md)).
+
+## In memory
+
+`createMemoryProvider(seed)` implements the whole contract, including `Where` filters. Use it for tests, demos and prototypes.
+
+## Caching
+
+Data goes through TanStack Query.
+
+- **Your own client:** if your app already renders a `QueryClientProvider`, instaui uses that client.
+- **Default client:** otherwise it creates one with no retries on 4xx and no refetch on window focus.
+- **Query keys:** `resourceKeys` builds them. They include `ctx`, so switching organisation never shows another one's cached data.
+
+```tsx
+import { useQueryClient } from '@tanstack/react-query';
+import { resourceKeys } from 'instaui';
+
+export function useRefreshOrders() {
+  const client = useQueryClient();
+  return () => client.invalidateQueries({ queryKey: resourceKeys.all('orders') });
+}
+```

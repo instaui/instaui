@@ -1,2 +1,28 @@
-node_modules
-.yarn
+# dependencies
+node_modules/
+
+# yarn (berry) — keep the standard committable files
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+
+# build & test output
+dist/
+coverage/
+*.tgz
+*.tsbuildinfo
+
+# editors & OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+
+# local env
+.env
+.env.*
+.docs-check/
