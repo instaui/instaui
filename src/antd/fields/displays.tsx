@@ -10,7 +10,6 @@ import { safeUrl } from '../../core/safe-url.ts';
 import { useInsta } from '../../react/context.tsx';
 import { makeLink } from '../../react/router.ts';
 import { buildPath } from '../../react/routes.ts';
-import { ResourceTable } from '../ResourceTable.tsx';
 import { RenderEnvContext } from './context.ts';
 
 export interface DisplayProps {
@@ -120,14 +119,14 @@ function RelationDisplay({ value, field }: DisplayProps) {
  */
 function TableDisplay({ value, field }: DisplayProps) {
   const { resources } = useInsta();
-  const { basePathOf } = useContext(RenderEnvContext);
+  const { basePathOf, Table } = useContext(RenderEnvContext);
   const [list, setList] = useState<ListState>({ page: 1, pageSize: 10, sort: [], filter: {} });
   const target = field.props.resource ? resources.get(field.props.resource) : undefined;
   const rows = Array.isArray(value) ? (value as AnyRecord[]) : [];
-  if (!target) return <>{rows.length}</>;
+  if (!target || !Table) return <>{rows.length}</>;
   const start = (list.page - 1) * list.pageSize;
   return (
-    <ResourceTable
+    <Table
       resource={target}
       rows={rows.slice(start, start + list.pageSize)}
       total={rows.length}

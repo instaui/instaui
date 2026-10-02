@@ -63,6 +63,23 @@ export async function fetchAll(
   return rows;
 }
 
+type ByIds = { resource: ResourceRef; ctx: InstaContext; ids: Id[]; signal?: AbortSignal };
+
+/** One `getOne` per id. A deleted or forbidden record is skipped, not an error for the rest. */
+async function eachById(provider: DataProvider, { ids, ...params }: ByIds) {
+  const found = await Promise.allSettled(
+    ids.map(async (id) => (await provider.getOne<AnyRecord>({ ...params, id })).data),
+  );
+  return found.flatMap((r) => (r.status === 'fulfilled' && r.value ? [r.value] : []));
+}
+
+/** Records by id: the provider's `getMany` when it has one, else one `getOne` per id. */
+export async function getRecordsByIds(provider: DataProvider, params: ByIds): Promise<AnyRecord[]> {
+  return provider.getMany
+    ? (await provider.getMany<AnyRecord>(params)).data
+    : eachById(provider, params);
+}
+
 export function withListFallbacks(base: DataProvider): DataProvider {
   const findByIds = async (
     resource: ResourceRef,
@@ -77,9 +94,9 @@ export function withListFallbacks(base: DataProvider): DataProvider {
       const rows = await fetchAll(base, { resource, ctx, signal });
       return rows.filter((r) => set.has(String(recordId(resource, r))));
     }
+    if (!lookup) return eachById(base, { resource, ctx, ids: wanted, signal });
     const found = await Promise.allSettled(
       wanted.map(async (id) => {
-        if (!lookup) return (await base.getOne<AnyRecord>({ resource, ctx, id, signal })).data;
         const { data } = await base.getList<AnyRecord>({
           resource,
           ctx,
