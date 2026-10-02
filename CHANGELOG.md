@@ -12,7 +12,7 @@ Note: versions `1.0.2` and `1.0.3` can never be published (npm reserved them fro
 ### Added
 
 - `messages.expandMenu` and `messages.collapseMenu` label `InstaAdmin`'s menu toggle (they were fixed English).
-- Types used by public signatures are exported too: `BaseParams` (data provider calls), `ActionTarget` and `ActionText` (action `confirm` texts) and `Notify` (`ViewProps.notify`).
+- Types used by public signatures are exported too: `BaseParams` (data provider calls), `ActionTarget` and `ActionText` (action `confirm` texts), `Notify` (`ViewProps.notify`), `WhereGroup` (part of `Where`) and `ListKeyParams` (`resourceKeys.list`).
 
 ### Fixed
 

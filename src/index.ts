@@ -32,6 +32,7 @@ export type { ConfigIssue, ValidateOptions } from './core/validate-config.ts';
 export { createMemoryProvider } from './core/memory-provider.ts';
 export type { MemoryProviderOptions } from './core/memory-provider.ts';
 export { resourceKeys } from './core/query-keys.ts';
+export type { ListKeyParams } from './core/query-keys.ts';
 export { defineResource } from './core/resource.ts';
 export type {
   AccessRule,
@@ -87,6 +88,7 @@ export type {
   PredicateOps,
   VarRef,
   Where,
+  WhereGroup,
   WhereScope,
 } from './core/where.ts';
 
