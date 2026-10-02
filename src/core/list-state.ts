@@ -8,8 +8,10 @@ import type { SortSpec } from './data-provider.ts';
 import {
   fromConditions,
   OPERATORS,
+  conditionsToParams,
+  joinValues,
   toConditions,
-  type Condition,
+  type WhereCondition,
   type Operator,
   type Where,
 } from './where.ts';
@@ -57,13 +59,12 @@ function coerce(raw: string, type: string | undefined, op: Operator): unknown {
   return raw;
 }
 
-const encodeValue = (value: unknown) =>
-  Array.isArray(value) ? value.map(String).join(',') : String(value);
+const encodeValue = (value: unknown) => String(joinValues(value));
 
 export const defaultUrlCodec: UrlCodec = {
   parse(search, defaults) {
     const params = new URLSearchParams(search);
-    const conditions: Condition[] = [];
+    const conditions: WhereCondition[] = [];
     for (const [key, raw] of params) {
       if (!key.startsWith('f.')) continue;
       const parts = key.slice(2).split('.');
@@ -149,7 +150,7 @@ export function paramUrlCodec({
       const params = new URLSearchParams(query);
       const fields = Object.keys(defaults.fieldTypes ?? {});
       const byParam = new Map(fields.map((f) => [defaults.fieldParams?.[f] ?? f, f]));
-      const conditions: Condition[] = [];
+      const conditions: WhereCondition[] = [];
       const rangeByParam = new Map<string, { field: string; op: Operator }>();
       for (const [field, [from, to]] of Object.entries(defaults.fieldParamRanges ?? {})) {
         rangeByParam.set(from, { field, op: '$gte' });
@@ -206,22 +207,11 @@ export function paramUrlCodec({
         params.set(sort, state.sort.map((s) => s.field).join(','));
         if (state.sort.length) params.set(order, state.sort.map((s) => s.order).join(','));
       }
-      for (const { field, op, value } of toConditions(state.filter)) {
+      const names = { params: defaults.fieldParams, ranges: defaults.fieldParamRanges };
+      for (const [key, value] of conditionsToParams(toConditions(state.filter), names)) {
         if (value === undefined || value === '' || (Array.isArray(value) && value.length === 0))
           continue;
-        const range = defaults.fieldParamRanges?.[field];
-        if (range && (op === '$gte' || op === '$lte')) {
-          params.set(op === '$gte' ? range[0] : range[1], encodeValue(value));
-          continue;
-        }
-        if (range && op === '$between') {
-          const [lo, hi] = value as [unknown, unknown];
-          params.set(range[0], encodeValue(lo));
-          params.set(range[1], encodeValue(hi));
-          continue;
-        }
-        const name = defaults.fieldParams?.[field] ?? field;
-        params.set(op === '$eq' ? name : `${name}[${op.slice(1)}]`, encodeValue(value));
+        params.set(key, encodeValue(value));
       }
       if (state.search) params.set(search, state.search);
       if (state.tab && state.tab !== defaults.defaultTab) params.set(tab, state.tab);

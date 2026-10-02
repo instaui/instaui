@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { codecFor } from '../core/codecs.ts';
 import type { ListState } from '../core/list-state.ts';
 import type { NormalizedResource } from '../core/resource.ts';
-import { toConditions, type Condition, type Where } from '../core/where.ts';
+import { toConditions, type WhereCondition, type Where } from '../core/where.ts';
 import { useInsta } from '../react/context.tsx';
 
 interface SavedView {
@@ -56,10 +56,10 @@ export function FilterBar({ resource, list, onListChange, savedViews = false }: 
   const [naming, setNaming] = useState<string>();
 
   const conditions = toConditions(list.filter);
-  const byField = new Map<string, Condition[]>();
+  const byField = new Map<string, WhereCondition[]>();
   for (const c of conditions) byField.set(c.field, [...(byField.get(c.field) ?? []), c]);
 
-  const describe = (fieldKey: string, items: Condition[]) => {
+  const describe = (fieldKey: string, items: WhereCondition[]) => {
     const field = resource.fields.find((f) => f.key === fieldKey);
     const label = field?.label ?? fieldKey;
     const text = (v: unknown) =>

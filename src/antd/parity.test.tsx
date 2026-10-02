@@ -109,6 +109,12 @@ describe('core', () => {
     const url = codec.stringify(state, defaults);
     expect(url).toBe('?totalFrom=5&totalTo=60');
     expect(codec.parse(url, defaults)).toEqual(state);
+    expect(
+      codec.stringify(
+        { ...state, filter: { total: { $between: [1, 2] }, status: { $in: ['A', 'B'] } } },
+        { ...defaults, fieldParams: { status: 'state' } },
+      ),
+    ).toBe('?totalFrom=1&totalTo=2&state%5Bin%5D=A%2CB');
   });
 
   test('tabs round-trip in URLs; the default tab is omitted', () => {

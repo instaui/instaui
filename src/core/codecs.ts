@@ -233,6 +233,6 @@ export function codecFor(
   return registry[type] ?? builtinCodecs.text!;
 }
 
-export function isEmptyValue(codec: FieldCodec, value: unknown): boolean {
+export function codecIsEmpty(codec: FieldCodec, value: unknown): boolean {
   return codec.isEmpty ? codec.isEmpty(value) : isBlank(value);
 }

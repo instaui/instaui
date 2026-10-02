@@ -78,7 +78,7 @@ export type { ApiClientLike } from './core/api-client.ts';
 export type { RestOperation, RestProviderOptions, RestRequest } from './core/rest-provider.ts';
 export { evaluateWhere, toConditions, WhereError } from './core/where.ts';
 export type {
-  Condition as WhereCondition,
+  WhereCondition,
   Operator,
   Predicate,
   PredicateOps,

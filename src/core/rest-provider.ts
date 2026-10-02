@@ -24,7 +24,7 @@ import { HttpError, type FieldErrors } from './http-error.ts';
 import { getPath } from './path.ts';
 import { withListFallbacks } from './lookup.ts';
 import { renderTemplate } from './template.ts';
-import { toConditions } from './where.ts';
+import { conditionsToParams, joinValues, toConditions } from './where.ts';
 import { isBlank, isRecord } from './value.ts';
 
 export interface RestRequest {
@@ -82,9 +82,6 @@ export function defaultUrlFor(
     : `${base}/${encodeURIComponent(String(id))}`;
 }
 
-const joinValue = (v: unknown): QueryValue =>
-  Array.isArray(v) ? v.map(String).join(',') : (v as QueryValue);
-
 /** `?page=2&pageSize=20&sort=name,createdAt&order=asc,desc&status=A&amount[gte]=10&q=text` */
 export function defaultEncodeList(params: ListParams): Record<string, QueryValue> {
   const query: Record<string, QueryValue> = {};
@@ -99,21 +96,10 @@ export function defaultEncodeList(params: ListParams): Record<string, QueryValue
     query.sort = params.sort.map((s) => s.field).join(',');
     query.order = params.sort.map((s) => s.order).join(',');
   }
-  for (const { field, op, value } of toConditions(params.filter, { ctx: params.ctx })) {
-    const range = params.resource.paramRanges?.[field];
-    if (range && (op === '$gte' || op === '$lte' || op === '$between')) {
-      const [lo, hi] =
-        op === '$between'
-          ? (value as [unknown, unknown])
-          : op === '$gte'
-            ? [value, undefined]
-            : [undefined, value];
-      if (lo !== undefined) query[range[0]] = lo as QueryValue;
-      if (hi !== undefined) query[range[1]] = hi as QueryValue;
-      continue;
-    }
-    const name = params.resource.params?.[field] ?? field;
-    query[op === '$eq' ? name : `${name}[${op.slice(1)}]`] = joinValue(value);
+  const conditions = toConditions(params.filter, { ctx: params.ctx });
+  const names = { params: params.resource.params, ranges: params.resource.paramRanges };
+  for (const [key, value] of conditionsToParams(conditions, names)) {
+    query[key] = joinValues(value) as QueryValue;
   }
   if (params.search) query.q = params.search;
   return query;
