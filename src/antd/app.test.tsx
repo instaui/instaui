@@ -261,3 +261,43 @@ describe('InstaAdmin', () => {
     expect(screen.getByRole('heading', { name: 'Statistics' })).toBeTruthy();
   });
 });
+
+describe('config validation knows every built-in renderer', () => {
+  test('each built-in display and widget validates without errors', async () => {
+    const { builtinDisplays } = await import('./fields/displays.tsx');
+    const { builtinWidgets } = await import('./fields/widgets.tsx');
+    const { validateConfig } = await import('../core/validate-config.ts');
+    const resource = defineResource({
+      name: 'everything',
+      fields: [
+        ...Object.keys(builtinDisplays).map((display) => ({
+          key: `d_${display}`,
+          type: 'text',
+          display,
+        })),
+        ...Object.keys(builtinWidgets).map((widget) => ({
+          key: `w_${widget}`,
+          type: 'text',
+          widget,
+        })),
+      ],
+    });
+    expect(validateConfig([resource]).filter((i) => i.level === 'error')).toEqual([]);
+  });
+});
+
+describe('browser routing', () => {
+  test('a URL changed outside instaui before mount is the one used', async () => {
+    const client = fakeClient({ a: [{ id: 1, name: 'In A' }], b: [{ id: 2, name: 'In B' }] });
+    const resources = ['a', 'b'].map((name) =>
+      defineResource({ name, fields: [{ key: 'name', type: 'text' }] }),
+    );
+    const first = render(<InstaApp apiClient={client} resources={resources} />);
+    expect(await screen.findByText('In A')).toBeTruthy();
+    first.unmount();
+    // e.g. an app stripping a login token from the URL with history.replaceState.
+    window.history.replaceState(null, '', '/b');
+    render(<InstaApp apiClient={client} resources={resources} />);
+    expect(await screen.findByText('In B')).toBeTruthy();
+  });
+});

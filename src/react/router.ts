@@ -53,9 +53,15 @@ function createStore(
 ) {
   const listeners = new Set<() => void>();
   let snapshot = read();
-  const emit = () => {
+  // Re-read on every call, so a change made outside the store (e.g. the app's own
+  // `history.replaceState` before mount) is seen; the same object is returned while unchanged.
+  const getSnapshot = () => {
     const next = read();
     if (next.pathname !== snapshot.pathname || next.search !== snapshot.search) snapshot = next;
+    return snapshot;
+  };
+  const emit = () => {
+    getSnapshot();
     listeners.forEach((l) => l());
   };
   return {
@@ -63,7 +69,7 @@ function createStore(
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    getSnapshot: () => snapshot,
+    getSnapshot,
     navigate(to: string, { replace = false }: NavigateOptions = {}) {
       write(splitPath(to), replace);
       emit();

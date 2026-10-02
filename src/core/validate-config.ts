@@ -84,7 +84,7 @@ const BUILTIN_WIDGETS = [
   'relation',
   'json',
 ];
-const BUILTIN_DISPLAYS = ['text', 'link', 'image', 'tag', 'json', 'copyable', 'relation'];
+const BUILTIN_DISPLAYS = ['text', 'link', 'image', 'tag', 'json', 'copyable', 'relation', 'table'];
 const FIELD_MODES = new Set(['editable', 'readonly', 'hidden']);
 const operators = new Set<string>(OPERATORS);
 
