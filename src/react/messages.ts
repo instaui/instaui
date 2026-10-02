@@ -8,14 +8,12 @@ export const defaultMessages = {
   view: 'View',
   save: 'Save',
   cancel: 'Cancel',
-  close: 'Close',
   actions: 'Actions',
   filter: 'Filter',
   reset: 'Reset',
   search: 'Search',
   min: 'Min',
   max: 'Max',
-  loading: 'Loading…',
   noData: 'No data',
   total: (count: number) => `${count} total`,
   createTitle: (label: string) => `New ${label}`,
@@ -43,6 +41,8 @@ export const defaultMessages = {
   deleteView: (name: string) => `Delete view ${name}`,
   selected: (count: number) => (count === 0 ? 'Select rows for bulk actions' : `${count} selected`),
   clearSelection: 'Clear selection',
+  expandMenu: 'Expand menu',
+  collapseMenu: 'Collapse menu',
 };
 
 export type Messages = typeof defaultMessages;

@@ -93,7 +93,7 @@ function AdminShell({ basePath = '', title, paths, slots }: InstaAdminProps) {
         >
           <Button
             type="text"
-            aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
+            aria-label={collapsed ? messages.expandMenu : messages.collapseMenu}
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed((c) => !c)}
           />

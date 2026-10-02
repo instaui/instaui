@@ -94,7 +94,6 @@ export function useResourceRouting(
   const resource = useResource(resourceName);
   const { router, urlCodec } = useInsta();
   const { location, navigate } = router.useRouter();
-  const codec = urlCodec;
 
   const defaults = useMemo(
     () => ({
@@ -108,8 +107,8 @@ export function useResourceRouting(
     [resource],
   );
   const list = useMemo(
-    () => codec.parse(location.search, defaults),
-    [codec, location.search, defaults],
+    () => urlCodec.parse(location.search, defaults),
+    [urlCodec, location.search, defaults],
   );
   const current = useMemo(
     () => matchView(location.pathname, base, paths),
@@ -127,11 +126,14 @@ export function useResourceRouting(
     list,
     setList: useCallback(
       (next: ListState) => {
-        navigate(`${buildPath(base, 'list', undefined, paths)}${codec.stringify(next, defaults)}`, {
-          replace: true,
-        });
+        navigate(
+          `${buildPath(base, 'list', undefined, paths)}${urlCodec.stringify(next, defaults)}`,
+          {
+            replace: true,
+          },
+        );
       },
-      [base, paths, navigate, codec, defaults],
+      [base, paths, navigate, urlCodec, defaults],
     ),
     openDetail: useCallback(
       (id: string | number) => navigate(hrefFor('detail', id)),

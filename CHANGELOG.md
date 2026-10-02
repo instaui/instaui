@@ -5,6 +5,14 @@ Note: versions `1.0.2` and `1.0.3` can never be published (npm reserved them fro
 
 ## Unreleased
 
+### Breaking
+
+- `messages.close` and `messages.loading` are removed: nothing displayed them.
+
+### Added
+
+- `messages.expandMenu` and `messages.collapseMenu` label `InstaAdmin`'s menu toggle (they were fixed English).
+
 ### Fixed
 
 - The list search box no longer keeps old text after the search is cleared elsewhere (its chip, "Clear all", a saved view or the browser's Back button).
