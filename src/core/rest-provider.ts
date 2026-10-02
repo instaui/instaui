@@ -322,12 +322,12 @@ export function createRestProvider(options: RestProviderOptions = {}): DataProvi
 export interface ApiClientLike {
   get(
     url: string,
-    config?: { params?: unknown; signal?: AbortSignal; responseType?: string },
+    config?: { params?: unknown; signal?: AbortSignal; responseType?: RestRequest['responseType'] },
   ): Promise<unknown>;
   post(
     url: string,
     data?: unknown,
-    config?: { signal?: AbortSignal; responseType?: string },
+    config?: { signal?: AbortSignal; responseType?: RestRequest['responseType'] },
   ): Promise<unknown>;
   patch(url: string, data?: unknown, config?: { signal?: AbortSignal }): Promise<unknown>;
   put?(url: string, data?: unknown, config?: { signal?: AbortSignal }): Promise<unknown>;

@@ -189,6 +189,23 @@ describe('createRestProvider over fetch', () => {
 });
 
 describe('fromApiClient', () => {
+  test('accepts a client typed like axios (literal responseType, typed config)', () => {
+    // axios declares `responseType` as a string union, so a wider `string` here would reject it.
+    type ResponseType = 'arraybuffer' | 'blob' | 'document' | 'json' | 'text' | 'stream';
+    interface AxiosLikeConfig {
+      params?: unknown;
+      signal?: { aborted: boolean };
+      responseType?: ResponseType;
+    }
+    const axiosLike: {
+      get(url: string, config?: AxiosLikeConfig): Promise<unknown>;
+      post(url: string, data?: unknown, config?: AxiosLikeConfig): Promise<unknown>;
+      patch(url: string, data?: unknown, config?: AxiosLikeConfig): Promise<unknown>;
+      delete(url: string, config?: AxiosLikeConfig): Promise<unknown>;
+    } = { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() };
+    expect(fromApiClient(axiosLike)).toBeTruthy();
+  });
+
   test('routes calls through an axios-style client and maps its errors', async () => {
     const client = {
       get: vi.fn().mockResolvedValue({ data: { users: [{ id: 1 }], count: 1 } }),
