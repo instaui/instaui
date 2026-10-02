@@ -11,6 +11,7 @@ instaui turns a REST API into an admin app from a description of its resources: 
 ## Where to start
 
 - [A frontend for your REST API](for-backend-developers.md): from an empty folder to a working admin, no React knowledge needed
+- [How instaui compares](comparison.md) with react-admin, Refine, Retool and others
 - [Getting started](getting-started.md)
 - [Resources and fields](resources-and-fields.md)
 - [Conditions and filters (`Where`)](where.md)

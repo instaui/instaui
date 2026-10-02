@@ -70,6 +70,8 @@ export const App = () => (
 
 ## When it fits
 
+See [how instaui compares](docs/comparison.md) with react-admin, Refine, Retool, Appsmith, ToolJet, AdminJS and Forest Admin.
+
 - **Good fit:** internal tools, admin panels, back-offices and support consoles over REST-style APIs.
 - **Not a fit:** customer-facing UIs with a bespoke design, or page builders. instaui renders standard REST resources well and leaves bespoke screens to you.
 
