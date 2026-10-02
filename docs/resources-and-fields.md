@@ -72,7 +72,47 @@ export const orders = defineResource<Order>({
 | `visibleIf`       | always                 | A [`Where`](where.md) or a function of the form values. Hidden fields aren't submitted. |
 | `submit`          | `'whenVisible'`        | `'always'` submits read-only or hidden values too; `'never'` never submits.             |
 
-## Lists: tabs, filter bar, ranges
+## Relations
+
+A `relation` field stores the target's id and edits it with a server-searched picker. The target is another resource, registered like any other; give it `menu: false` when it exists only for pickers.
+
+| Prop                 | Effect                                                                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `props.resource`     | The target resource's name.                                                                                  |
+| `props.label`        | A `{…}` template for options and cells. The default is the target's `recordLabel`.                           |
+| `props.multiple`     | Pick several ids.                                                                                            |
+| `props.searchFields` | Passed to the provider as `meta.searchFields` with the typed text (see [Data providers](data-providers.md)). |
+| `props.params`       | A [`Where`](where.md) for the options. `{ $var: 'values.x' }` reads another form value.                      |
+| `props.link`         | How a cell links to the record: `'route'` (default), `'drawer'` or `'none'`.                                 |
+
+Pickers that depend on each other combine `props.params` with `resetOn` and `readOnlyIf`:
+
+```tsx
+import { defineResource } from 'instaui';
+
+export const branches = defineResource({
+  name: 'branches',
+  fields: [
+    { key: 'name', type: 'text' },
+    { key: 'countryId', type: 'relation', required: true, props: { resource: 'countries' } },
+    {
+      key: 'cityId',
+      type: 'relation',
+      required: true,
+      placeholder: 'Pick a country first',
+      // Only the chosen country's active cities; cleared when the country changes.
+      props: {
+        resource: 'cities',
+        params: { countryId: { $var: 'values.countryId' }, active: true },
+      },
+      resetOn: ['countryId'],
+      readOnlyIf: (values) => !values.countryId,
+    },
+  ],
+});
+```
+
+If the API returns the related record nested next to the id, a [display](custom-fields-and-escape-hatches.md) can show its name directly, without a lookup.
 
 ```tsx
 import { defineResource } from 'instaui';
@@ -125,4 +165,45 @@ export const tickets = defineResource({
 - **Validation order:** field rules (`required`, `validate`) run first, then `form.validate(values)`, which can return `{ field: message }` or `{ _form: message }`, and finally the server. Server errors with `fieldErrors` are shown on the matching fields.
 - **`form.emptyValue: 'omit'`** makes updates leave empty values out instead of sending `null`.
 - **`form.validatePayload(payload)`** validates the final payload, after encoding and `beforeSubmit`, for rules written against the API's shape. It returns field messages, a form-level message, or nothing.
-- **`form.beforeSubmit(payload)`** is an escape hatch for reshaping the payload. Prefer field types and codecs. Using it switches the default to full updates.
+- **`form.beforeSubmit(payload, { mode, ctx, record })`** is an escape hatch for reshaping the payload. Prefer field types and codecs. Using it switches the default to full updates. `record` is the record being edited (undefined on create), and `validatePayload` receives the same second argument.
+- **`readOnlyIf` and `visibleIf` functions** receive `(values, ctx, record)`, so a field can lock depending on the stored record.
+
+A strict update endpoint that accepts only some keys, and only for some records:
+
+```tsx
+import { defineResource } from 'instaui';
+
+export const invoices = defineResource({
+  name: 'invoices',
+  fields: [
+    { key: 'number', type: 'text', edit: 'readonly' },
+    {
+      key: 'kind',
+      type: 'enum',
+      edit: 'readonly',
+      props: {
+        options: [
+          { value: 'STANDARD', label: 'Standard' },
+          { value: 'CREDIT', label: 'Credit note' },
+        ],
+      },
+    },
+    { key: 'notes', type: 'text', widget: 'textarea' },
+    {
+      key: 'lines',
+      type: 'json',
+      list: false,
+      readOnlyIf: (_values, _ctx, record) => record?.kind === 'CREDIT',
+    },
+  ],
+  form: {
+    // PATCH accepts { notes, lines } only, and credit notes take notes only.
+    beforeSubmit: (payload, { mode, record }) =>
+      mode === 'create'
+        ? payload
+        : record?.kind === 'CREDIT'
+          ? { notes: payload.notes }
+          : { notes: payload.notes, lines: payload.lines },
+  },
+});
+```

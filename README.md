@@ -1,6 +1,6 @@
 # instaui
 
-> **Status:** `0.0.12` ships the new engine. It is pre-1.0, so the API may still change. 0.0.10 and earlier (`ItemCrud`) are deprecated.
+> **Status:** `0.0.13` is the current release of the new engine (introduced in `0.0.12`). It is pre-1.0, so the API may still change. 0.0.10 and earlier (`ItemCrud`) are deprecated.
 
 **Config-first CRUD for antd.** Define a resource once, in TypeScript or as JSON served by your backend, and get the list, filters, forms, detail view, actions and permissions from that one definition.
 
@@ -48,7 +48,7 @@ export const App = () => (
 ```
 
 - **Using your app's router:** pass `router={createRouterAdapter({ useLocation, useNavigate })}` with the hooks from your own `react-router-dom`, and render `<ResourceCrud resource="projects" basePath="/projects" />` wherever you like.
-- **Using an existing axios-style client:** `fromApiClient(apiClient, { decodeList, encodeList })`.
+- **Using an existing axios-style client:** `fromApiClient(apiClient, { encodeList, decodeList })`. [Fitting an existing API](docs/data-providers.md#fitting-an-existing-api) covers other parameter names, single-column search and missing routes.
 - **Tests and demos:** `createMemoryProvider(seed)`.
 
 Read the [documentation](docs/README.md) for resources, fields, `Where`, data providers, routing, actions, access and escape hatches.
@@ -79,7 +79,7 @@ The package is **ESM-only** and has a single entry point (`import { … } from '
 ```bash
 corepack enable
 yarn install
-yarn ci        # lint, format check, typecheck, tests, version guard, package checks
+yarn ci        # lint, format check, typecheck, tests, docs examples, version guard, package checks
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and conventions.

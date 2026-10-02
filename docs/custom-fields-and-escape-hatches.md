@@ -41,6 +41,13 @@ export const App = () => (
 );
 ```
 
+| Component | Receives                                                                                                                                     |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Widget    | `value`, `onChange`, `id`, `disabled`, `field`, `mode` (`'create'`/`'edit'`), `values` (the whole form), `params` (resolved relation params) |
+| Display   | `value`, `record`, `field`, `resource`, `context`: `'list'` in a table cell, `'detail'` in the detail view                                   |
+
+`context` lets one display render compactly in cells and in full in the detail view, for example a nested record's name in the list and a linked card in the detail.
+
 Register a custom **codec** (`registry.codecs`) for a new field type that needs its own wire format.
 
 ## 2. Whole views
@@ -78,4 +85,26 @@ export const EditTask = ({ id, onDone }: { id: number; onDone(): void }) => (
 
 ## 4. Headless
 
-`useResourceList`, `useResourceRecord`, `useResourceMutations`, `useRelationOptions`, `useResourceSubmit` and `useCan` give you data, saving and access with your own UI. `RelationSelect` is a standalone, server-searched relation picker.
+`useResourceList`, `useResourceRecord`, `useResourceMutations`, `useRelationOptions`, `useResourceSubmit` and `useCan` give you data, saving and access with your own UI.
+
+`RelationSelect` is the relation picker on its own, for your own screens and forms. It needs an `<InstaProvider>` above it with the target resource registered. It loads options when opened, searches on the server, pages on scroll, and resolves the labels of selected ids. Inside an antd `Form.Item` it receives `value` and `onChange` like any input.
+
+```tsx
+import { Form } from 'antd';
+import { RelationSelect } from 'instaui';
+
+export function AssignForm({ countryId }: { countryId?: string }) {
+  return (
+    <Form layout="vertical">
+      <Form.Item name="userId" label="User" rules={[{ required: true }]}>
+        <RelationSelect resource="users" placeholder="Search users" />
+      </Form.Item>
+      <Form.Item name="cityIds" label="Cities">
+        <RelationSelect resource="cities" multiple params={{ countryId }} disabled={!countryId} />
+      </Form.Item>
+    </Form>
+  );
+}
+```
+
+`params` here is already resolved (no `$var`); an `undefined` value means no filter.

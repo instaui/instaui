@@ -10,6 +10,7 @@ Note: versions `1.0.2` and `1.0.3` can never be published (npm reserved them fro
 - `form.beforeSubmit` and `form.validatePayload` receive `record`, the record being edited (undefined on create).
 - Display components receive `context: 'list' | 'detail'`, so one display can render differently in cells and in the detail view.
 - Fix: `fromApiClient` accepts clients typed like axios. `responseType` was typed `string`, which axios's literal union could not satisfy.
+- Docs: fitting an existing API (custom `encodeList`, per-resource `api` options, backends without GET-one), dependent relation pickers, `RelationSelect` in your own forms, and what widgets and displays receive.
 
 ## 0.0.12
 
