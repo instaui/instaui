@@ -1,5 +1,6 @@
 /** Features for apps migrating from config-driven CRUD forks: tabs, filter bar, ranges, row slots, access functions. */
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { render } from '../../test/render.tsx';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { paramUrlCodec, defaultUrlCodec } from '../core/list-state.ts';
 import { createMemoryProvider } from '../core/memory-provider.ts';

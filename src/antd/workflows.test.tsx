@@ -1,5 +1,6 @@
 /** Bulk actions, action forms and embedded views: screens that used to need custom components. */
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { render } from '../../test/render.tsx';
 import { describe, expect, test, vi } from 'vitest';
 import { HttpError } from '../core/http-error.ts';
 import { createMemoryProvider } from '../core/memory-provider.ts';
@@ -10,11 +11,7 @@ import { InstaProvider } from '../react/context.tsx';
 import { memoryAdapter } from '../react/router.ts';
 import { ResourceCrud } from './ResourceCrud.tsx';
 
-// jsdom never ends antd's leave transition, so a closed modal stays in the DOM, leaving.
-const isClosed = () => {
-  const dialog = screen.queryByRole('dialog');
-  return !dialog || /-leave/.test(dialog.className);
-};
+const isClosed = () => screen.queryByRole('dialog') === null;
 
 const seed = () => ({
   numbers: [
@@ -242,7 +239,7 @@ describe('bulk confirmations and optional inputs are configuration', () => {
     expect(run).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Park' }));
-    dialog = (await screen.findAllByRole('dialog')).find((d) => !/-leave/.test(d.className))!;
+    dialog = await screen.findByRole('dialog');
     const ok = within(dialog).getByRole('button', { name: 'Park them' });
     expect(ok.className).toMatch(/dangerous/);
     fireEvent.click(ok);
@@ -337,23 +334,20 @@ describe('confirmations', () => {
     );
     fireEvent.change(await screen.findByDisplayValue('AVAILABLE'), { target: { value: 'PARKED' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-    const confirmBox = (await screen.findAllByText('Change state to PARKED?'))
-      .at(-1)!
-      .closest('.ant-modal') as HTMLElement;
-    fireEvent.click(within(confirmBox).getByRole('button', { name: 'Cancel' }));
-    await new Promise((r) => setTimeout(r, 50));
+    // The edit form is a dialog too; the confirm is the one asking the question.
+    const question = 'Change state to PARKED?';
+    const confirmBox = async () =>
+      (await screen.findByText(question, { selector: '.ant-modal-confirm-title' })).closest(
+        '.ant-modal-confirm',
+      ) as HTMLElement;
+    fireEvent.click(within(await confirmBox()).getByRole('button', { name: 'Cancel' }));
+    await waitFor(() =>
+      expect(screen.queryByText(question, { selector: '.ant-modal-confirm-title' })).toBeNull(),
+    );
     expect(update).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-    // The cancelled confirm may still be leaving; act on the one that is open.
-    const open = await waitFor(() => {
-      const boxes = [...document.querySelectorAll<HTMLElement>('.ant-modal-confirm')].filter(
-        (b) => !/-leave/.test(b.className) && b.textContent?.includes('Change state to PARKED?'),
-      );
-      expect(boxes).toHaveLength(1);
-      return boxes[0]!;
-    });
-    fireEvent.click(within(open).getByRole('button', { name: 'Change' }));
+    fireEvent.click(within(await confirmBox()).getByRole('button', { name: 'Change' }));
     await waitFor(() => expect(update).toHaveBeenCalledTimes(1));
     expect(update.mock.calls[0]![0].data).toEqual({ state: 'PARKED' });
   });

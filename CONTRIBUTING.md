@@ -38,7 +38,7 @@ Keep files to one concern; when a component grows past a few hundred lines, spli
 - **antd types** come from `'antd'` only (see `src/antd/compat.ts`), never `antd/es/*` or `antd/lib/*`.
 - **No runtime dependencies.** Peers only. Small helpers live in `src/utils`.
 - **No router imports.** Routing goes through hooks the app injects. Never import `react-router` directly.
-- **Tests.** Every bug fix comes with a regression test named after its plan ID (for example `B01-deep-link.test.tsx`). Use MSW for HTTP.
+- **Tests.** Every bug fix comes with a regression test, next to the code it covers (`src/<layer>/*.test.ts(x)`) and named for the behaviour it guards. Render antd UI with `render` from `test/render.tsx` (animations off, so closed dialogs leave the DOM); never match on transition class names or sleep. Use MSW for HTTP.
 - **Public repo hygiene.** Never copy code, fixtures, endpoint names or data from private consumer apps into this repo. Use generic examples.
 
 ## Local development against an app
