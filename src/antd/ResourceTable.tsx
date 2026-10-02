@@ -15,7 +15,9 @@ import type { NormalizedField, NormalizedResource } from '../core/resource.ts';
 import type { PredicateOps, Where } from '../core/where.ts';
 import { useInsta } from '../react/context.tsx';
 import { fetchRecordsByIds } from '../react/data.ts';
-import { FieldDisplay, FilterControl, RenderEnvContext, type RenderEnv } from './fields.tsx';
+import { RenderEnvContext, type RenderEnv } from './fields/context.ts';
+import { FieldDisplay } from './fields/displays.tsx';
+import { FilterControl } from './fields/filters.tsx';
 
 /** Related records for relation cells, one request per related resource per page. */
 export function useRelatedRecords(rows: AnyRecord[], fields: NormalizedField[]) {

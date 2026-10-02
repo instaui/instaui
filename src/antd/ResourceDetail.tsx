@@ -5,7 +5,8 @@ import { getPath } from '../core/path.ts';
 import { conditionMet, type ContainerOptions, type NormalizedResource } from '../core/resource.ts';
 import { useInsta } from '../react/context.tsx';
 import { drawerWidth } from './compat.ts';
-import { FieldDisplay, RenderEnvContext } from './fields.tsx';
+import { RenderEnvContext } from './fields/context.ts';
+import { FieldDisplay } from './fields/displays.tsx';
 import { useRelatedRecords } from './ResourceTable.tsx';
 
 export function ResourceDetail({

@@ -4,12 +4,8 @@ import { server } from '../../test/msw/server.ts';
 import type { ListParams, ResourceRef } from './data-provider.ts';
 import { HttpError } from './http-error.ts';
 import { createMemoryProvider } from './memory-provider.ts';
-import {
-  createRestProvider,
-  defaultDecodeList,
-  defaultEncodeList,
-  fromApiClient,
-} from './rest-provider.ts';
+import { fromApiClient } from './api-client.ts';
+import { createRestProvider, defaultDecodeList, defaultEncodeList } from './rest-provider.ts';
 import { safeUrl } from './safe-url.ts';
 import { renderTemplate, TemplateError } from './template.ts';
 

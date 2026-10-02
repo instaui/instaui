@@ -11,6 +11,14 @@ Note: versions `1.0.2` and `1.0.3` can never be published (npm reserved them fro
 - `form.confirm(values, info)` asks before saving.
 - `confirm.okText` and `confirm.danger` for custom actions: a custom action's confirm no longer says "Delete".
 - `tags` fields accept `props.tokenSeparators`, so pasted lists split into values.
+- **`<InstaApp apiClient resources>`:** a whole admin app from an HTTP client and resource definitions. Custom views reach the client with `useApiClient()`.
+- **List fallbacks:** `api.lookup` (`'list'` or `{ search }`) for backends without a usable GET-one, and `api.search: 'client'` for lists that cannot search. Applied by `createRestProvider`; `withListFallbacks` wraps other providers.
+- `ActionContext.openResource(name, options)` opens a related resource's list in a modal.
+- Display `'table'` for nested rows, using another resource's columns.
+- `RelationSelect` accepts `ctx`.
+- `InstaAdmin` only routes menu entries (lookup-only resources are not screens); page resources show their heading.
+- `defineResource` written inline in `resources={[…]}` no longer infers the record type as `never`.
+- Internals: `ResourceCrud` split into `antd/crud/`, field renderers into `antd/fields/`, the axios adapter into `core/api-client.ts`, action types into `core/actions.ts`.
 
 ## 0.0.13
 

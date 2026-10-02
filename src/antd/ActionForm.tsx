@@ -9,7 +9,8 @@ import type { codecFor } from '../core/codecs.ts';
 import type { AnyRecord } from '../core/data-provider.ts';
 import { errorMessage, isHttpError } from '../core/http-error.ts';
 import { buildSubmitPayload, decodeRecord } from '../core/payload.ts';
-import { normalizeResource, type ActionForm as ActionFormConfig } from '../core/resource.ts';
+import { normalizeResource } from '../core/resource.ts';
+import type { ActionForm as ActionFormConfig } from '../core/actions.ts';
 import { useInsta } from '../react/context.tsx';
 import { applyFieldErrors, FormFields, resetDependents } from './FormFields.tsx';
 

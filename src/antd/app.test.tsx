@@ -10,7 +10,7 @@ import { memoryAdapter } from '../react/router.ts';
 import { InstaApp } from './InstaApp.tsx';
 import { InstaAdmin } from './InstaAdmin.tsx';
 import { RelationSelect } from './RelationSelect.tsx';
-import { ResourceCrud, type ViewProps } from './ResourceCrud.tsx';
+import { ResourceCrud } from './ResourceCrud.tsx';
 
 afterEach(() => window.history.replaceState(null, '', '/'));
 
@@ -220,7 +220,7 @@ describe('related lists and nested rows', () => {
       recordLabel: '{name}',
       fields: [{ key: 'name', type: 'text' }],
     });
-    function Picker(_: ViewProps) {
+    function Picker() {
       return <RelationSelect resource="members" ctx={{ teamId: 7 }} placeholder="Member" />;
     }
     render(

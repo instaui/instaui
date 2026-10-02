@@ -14,7 +14,64 @@ Notes:
 - **Jest:** add `instaui` to the `transformIgnorePatterns` exceptions, because the package is ESM-only.
 - **Linked local checkout:** make your bundler dedupe the peers. For Vite, use `resolve.dedupe: ['react', 'react-dom', 'antd', '@ant-design/icons', 'dayjs']`.
 
-## A first admin
+## An app from an API client and config
+
+`InstaApp` is a whole admin app: give it your HTTP client and your resource definitions.
+
+```tsx
+import axios from 'axios';
+import { InstaApp, defineResource } from 'instaui';
+
+const http = axios.create({ baseURL: '/api' });
+const apiClient = {
+  get: (url: string, config?: object) => http.get(url, config).then((r) => r.data),
+  post: (url: string, data?: unknown) => http.post(url, data).then((r) => r.data),
+  patch: (url: string, data?: unknown) => http.patch(url, data).then((r) => r.data),
+  delete: (url: string) => http.delete(url).then((r) => r.data),
+};
+
+const customers = defineResource({
+  name: 'customers',
+  recordLabel: '{name}',
+  fields: [
+    { key: 'name', type: 'text', required: true, filter: true },
+    { key: 'email', type: 'text' },
+  ],
+});
+
+export const App = () => (
+  <InstaApp title="Backoffice" apiClient={apiClient} resources={[customers]} />
+);
+```
+
+`InstaApp` routes with the browser URL and builds the data provider from the client. If your API's query parameters or envelopes differ from the defaults, pass them once as `api={{ encodeList, decodeList, … }}` (see [Data providers](data-providers.md)).
+
+### Custom views
+
+A screen with its own design is a resource too, so it gets a menu entry and a route. Use `kind: 'page'` for a whole screen, or `components.detail` / `create` / `edit` / `rowActions` to replace one view. Custom views make their own requests with the app's client:
+
+```tsx
+import { useApiClient, defineResource } from 'instaui';
+import { useEffect, useState } from 'react';
+
+type Client = { get(url: string): Promise<{ data: { total: number } }> };
+
+function Overview() {
+  const api = useApiClient<Client>();
+  const [total, setTotal] = useState<number>();
+  useEffect(() => void api.get('stats').then((r) => setTotal(r.data.total)), [api]);
+  return <p>{total ?? '…'} customers</p>;
+}
+
+export const overview = defineResource({
+  name: 'overview',
+  kind: 'page',
+  fields: [],
+  components: { page: Overview },
+});
+```
+
+## A first admin, step by step
 
 ```tsx
 import { InstaAdmin, InstaProvider, createMemoryProvider, defineResource } from 'instaui';
@@ -60,7 +117,7 @@ Replace `createMemoryProvider` with `createRestProvider({ baseUrl: '/api' })` to
 
 ## One resource, anywhere
 
-`InstaAdmin` is optional. To embed a single resource in your own layout, render `ResourceCrud`:
+`InstaApp` is `InstaProvider` + `InstaAdmin`, and both are optional. To embed a single resource in your own layout, render `ResourceCrud`:
 
 ```tsx
 import { InstaProvider, ResourceCrud, createRestProvider, defineResource } from 'instaui';

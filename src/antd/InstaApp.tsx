@@ -6,12 +6,8 @@
  */
 import { useMemo, useState } from 'react';
 import type { DataProvider } from '../core/data-provider.ts';
-import {
-  createRestProvider,
-  fromApiClient,
-  type ApiClientLike,
-  type RestProviderOptions,
-} from '../core/rest-provider.ts';
+import { fromApiClient, type ApiClientLike } from '../core/api-client.ts';
+import { createRestProvider, type RestProviderOptions } from '../core/rest-provider.ts';
 import { InstaProvider, type InstaProviderProps } from '../react/context.tsx';
 import { InstaAdmin, type InstaAdminProps } from './InstaAdmin.tsx';
 

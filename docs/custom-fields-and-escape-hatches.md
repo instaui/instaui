@@ -48,6 +48,8 @@ export const App = () => (
 
 `context` lets one display render compactly in cells and in full in the detail view, for example a nested record's name in the list and a linked card in the detail.
 
+Built-in displays: `text`, `link`, `image`, `tag` (uses the enum options' `color`), `json`, `copyable`, `relation`, and `table`. `table` shows nested rows that come inside a record (an array of objects) with the columns of the resource named by `props.resource`, paged in the browser: `{ key: 'lines', type: 'json', display: 'table', props: { resource: 'orderLines' } }`.
+
 Register a custom **codec** (`registry.codecs`) for a new field type that needs its own wire format.
 
 ## 2. Whole views
@@ -144,4 +146,4 @@ export function AssignForm({ countryId }: { countryId?: string }) {
 }
 ```
 
-`params` here is already resolved (no `$var`); an `undefined` value means no filter.
+`params` here is already resolved (no `$var`); an `undefined` value means no filter. `ctx` gives the picker extra context, e.g. `ctx={{ orderId }}` for a target whose path is `orders/{ctx.orderId}/items`.

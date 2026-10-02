@@ -36,13 +36,6 @@ export { resourceKeys } from './core/query-keys.ts';
 export { conditionMet, defineResource, normalizeResource } from './core/resource.ts';
 export type {
   AccessRule,
-  ActionConfirm,
-  ActionContext,
-  ActionDefinition,
-  ActionForm,
-  ActionPlacement,
-  BuiltinAction,
-  BuiltinActionConfig,
   BuiltinFieldType,
   Condition,
   ContainerOptions,
@@ -57,13 +50,22 @@ export type {
   ListTab,
   NormalizedField,
   NormalizedResource,
-  OpenResourceOptions,
-  ResourceAction,
   ResourceDefinition,
   SubmitConfirm,
   SubmitInfo,
   Validator,
 } from './core/resource.ts';
+export type {
+  ActionConfirm,
+  ActionContext,
+  ActionDefinition,
+  ActionForm,
+  ActionPlacement,
+  BuiltinAction,
+  BuiltinActionConfig,
+  OpenResourceOptions,
+  ResourceAction,
+} from './core/actions.ts';
 export {
   createRestProvider,
   defaultDecodeList,
@@ -72,14 +74,10 @@ export {
   defaultEncodeList,
   defaultMapError,
   defaultUrlFor,
-  fromApiClient,
 } from './core/rest-provider.ts';
-export type {
-  ApiClientLike,
-  RestOperation,
-  RestProviderOptions,
-  RestRequest,
-} from './core/rest-provider.ts';
+export { fromApiClient } from './core/api-client.ts';
+export type { ApiClientLike } from './core/api-client.ts';
+export type { RestOperation, RestProviderOptions, RestRequest } from './core/rest-provider.ts';
 export { safeUrl } from './core/safe-url.ts';
 export { renderTemplate, TemplateError } from './core/template.ts';
 export {
@@ -142,8 +140,12 @@ export { useResourceSubmit } from './react/submit.ts';
 export type { SubmitResult } from './react/submit.ts';
 
 // ── antd ─────────────────────────────────────────────────────────────────────
-export { builtinDisplays, builtinWidgets, FieldDisplay, FilterControl } from './antd/fields.tsx';
-export type { DisplayProps, FilterControlProps, WidgetProps } from './antd/fields.tsx';
+export { builtinDisplays, FieldDisplay } from './antd/fields/displays.tsx';
+export type { DisplayProps } from './antd/fields/displays.tsx';
+export { builtinWidgets } from './antd/fields/widgets.tsx';
+export type { WidgetProps } from './antd/fields/widgets.tsx';
+export { FilterControl } from './antd/fields/filters.tsx';
+export type { FilterControlProps } from './antd/fields/filters.tsx';
 export { InstaAdmin } from './antd/InstaAdmin.tsx';
 export { InstaApp } from './antd/InstaApp.tsx';
 export type { InstaAppProps } from './antd/InstaApp.tsx';

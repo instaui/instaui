@@ -9,7 +9,7 @@ import type { FieldErrors } from '../core/http-error.ts';
 import { conditionMet, type FormMode, type NormalizedField } from '../core/resource.ts';
 import { resolveVars } from '../core/where.ts';
 import { useInsta } from '../react/context.tsx';
-import { resolveWidget } from './fields.tsx';
+import { resolveWidget } from './fields/widgets.tsx';
 
 export const namePath = (key: string) => key.split('.');
 

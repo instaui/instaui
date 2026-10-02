@@ -137,52 +137,26 @@ export const makeProvider = (client: ApiClientLike) => fromApiClient(client, { e
 
 ### Routes the backend doesn't have
 
-A provider is a plain object, so you can wrap one and replace single methods. Relation labels call `getMany(ids)` once per page of rows; when a provider has no `getMany`, instaui calls `getOne` for each id. Here a backend with no `GET /{path}/{id}` for some resources finds those records in the list instead:
+Two `api` options cover the usual gaps, for any provider made with `createRestProvider` or `fromApiClient` (wrap other providers with `withListFallbacks`):
+
+| Option                     | Use when                                                                                   | What instaui does                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `lookup: 'list'`           | There is no `GET {path}/{id}`                                                              | Finds records by id by paging through the list (100 rows a page, up to 5,000 rows) |
+| `lookup: { search: 'id' }` | GET-one is missing or more restricted than the list, but the list can search the id column | Searches the list for the id                                                       |
+| `search: 'client'`         | The list cannot search                                                                     | Filters the first 100 rows by the typed text, in the browser                       |
+
+Relation labels need one record per id, so they use the same lookup. A provider's own `getMany` is used when it has one and the resource has no `lookup`.
 
 ```tsx
-import {
-  HttpError,
-  recordId,
-  type AnyRecord,
-  type DataProvider,
-  type Id,
-  type InstaContext,
-  type ResourceRef,
-} from 'instaui';
+import { defineResource } from 'instaui';
 
-/** For resources whose `api.lookup` is `'list'`: find records by id in the first 100 rows. */
-export function withListLookup(base: DataProvider): DataProvider {
-  const findByIds = async (resource: ResourceRef, ctx: InstaContext, ids: Id[]) => {
-    const wanted = new Set(ids.map(String));
-    const { data } = await base.getList<AnyRecord>({
-      resource,
-      ctx,
-      pagination: { mode: 'offset', page: 1, pageSize: 100 },
-      sort: [],
-      filter: {},
-    });
-    return data.filter((row) => wanted.has(String(recordId(resource, row))));
-  };
-  return {
-    ...base,
-    async getOne<T>(params: Parameters<DataProvider['getOne']>[0]) {
-      if (params.resource.api.lookup !== 'list') return base.getOne<T>(params);
-      const [record] = await findByIds(params.resource, params.ctx, [params.id]);
-      if (!record) throw new HttpError({ status: 404, message: 'Not found' });
-      return { data: record as T };
-    },
-    async getMany<T>(params: { resource: ResourceRef; ctx: InstaContext; ids: Id[] }) {
-      if (params.resource.api.lookup === 'list') {
-        return { data: (await findByIds(params.resource, params.ctx, params.ids)) as T[] };
-      }
-      const rows = await Promise.allSettled(
-        params.ids.map((id) => base.getOne<T>({ ...params, id })),
-      );
-      // A deleted or forbidden related record must not break the whole list.
-      return { data: rows.flatMap((r) => (r.status === 'fulfilled' ? [r.value.data] : [])) };
-    },
-  };
-}
+// GET /regions lists them all; there is no GET /regions/:id and no search.
+export const regions = defineResource({
+  name: 'regions',
+  api: { lookup: 'list', search: 'client' },
+  recordLabel: '{name}',
+  fields: [{ key: 'name', type: 'text' }],
+});
 ```
 
 For a missing **update or delete** route, don't offer the action: `actions: ['create', 'detail']` or `access: { edit: false }` (see [Actions and access](actions-and-access.md)).

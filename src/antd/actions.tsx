@@ -3,14 +3,13 @@ import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-de
 import { Button, Input, Modal } from 'antd';
 import { useState, type ReactNode } from 'react';
 import type { AnyRecord } from '../core/data-provider.ts';
+import { conditionMet, type NormalizedResource } from '../core/resource.ts';
 import {
-  conditionMet,
   type ActionConfirm,
   type ActionDefinition,
   type ActionPlacement,
   type BuiltinAction,
-  type NormalizedResource,
-} from '../core/resource.ts';
+} from '../core/actions.ts';
 import type { Messages } from '../react/messages.ts';
 
 export interface ResolvedAction {

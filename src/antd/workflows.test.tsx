@@ -3,7 +3,8 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { describe, expect, test, vi } from 'vitest';
 import { HttpError } from '../core/http-error.ts';
 import { createMemoryProvider } from '../core/memory-provider.ts';
-import { defineResource, type ActionContext, type ResourceDefinition } from '../core/resource.ts';
+import { defineResource, type ResourceDefinition } from '../core/resource.ts';
+import { type ActionContext } from '../core/actions.ts';
 import { createRestProvider } from '../core/rest-provider.ts';
 import { InstaProvider } from '../react/context.tsx';
 import { memoryAdapter } from '../react/router.ts';

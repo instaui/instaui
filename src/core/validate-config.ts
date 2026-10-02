@@ -3,7 +3,8 @@
  * failing at render time. `report` mode (the default) never throws; `strict` throws on errors.
  */
 import { builtinCodecs } from './codecs.ts';
-import type { BuiltinAction, ResourceDefinition } from './resource.ts';
+import type { ResourceDefinition } from './resource.ts';
+import type { BuiltinAction } from './actions.ts';
 import { templatePlaceholders } from './template.ts';
 import { OPERATORS } from './where.ts';
 

@@ -47,6 +47,7 @@ export const App = () => (
 );
 ```
 
+- **From your own HTTP client:** `<InstaApp apiClient={client} resources={[…]} />` is the whole app; custom screens are resources with `kind: 'page'` and call the same client through `useApiClient()`. See [Getting started](docs/getting-started.md).
 - **Using your app's router:** pass `router={createRouterAdapter({ useLocation, useNavigate })}` with the hooks from your own `react-router-dom`, and render `<ResourceCrud resource="projects" basePath="/projects" />` wherever you like.
 - **Using an existing axios-style client:** `fromApiClient(apiClient, { encodeList, decodeList })`. [Fitting an existing API](docs/data-providers.md#fitting-an-existing-api) covers other parameter names, single-column search and missing routes.
 - **Tests and demos:** `createMemoryProvider(seed)`.

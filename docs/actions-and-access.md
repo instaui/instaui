@@ -129,6 +129,41 @@ export const devices = defineResource({
 
 An action can also show a result instead of a form: `open(content, { title, width })` puts any React content in a modal owned by instaui.
 
+### Related lists
+
+`openResource(name, { ctx, filter, defaults, title, width })` opens another resource's list in that modal, with its own detail, forms and actions. Give the related resource `menu: false` and an `api.path` that reads the parent from `ctx`:
+
+```tsx
+import { defineResource } from 'instaui';
+
+export const shipments = defineResource({
+  name: 'shipments',
+  fields: [{ key: 'number', type: 'text' }],
+  actions: [
+    'detail',
+    {
+      id: 'events',
+      label: 'Tracking',
+      placement: ['row', 'detail'],
+      onSuccess: 'none',
+      run: ({ record, openResource }) =>
+        openResource('shipmentEvents', { ctx: { shipmentId: record?.id }, title: 'Tracking' }),
+    },
+  ],
+});
+
+export const shipmentEvents = defineResource({
+  name: 'shipmentEvents',
+  menu: false,
+  api: { path: 'shipments/{ctx.shipmentId}/events' },
+  fields: [
+    { key: 'at', type: 'datetime' },
+    { key: 'status', type: 'text' },
+  ],
+  actions: [],
+});
+```
+
 ## Access
 
 `access` maps an action (built-in or custom id, or `list`) to `true`/`false`, a [`Where`](where.md) on the record, or a function `(record, ctx) => boolean`. `<InstaProvider can={…}>` adds an app-wide check, and the two are AND-ed. Checks are synchronous.
