@@ -4,7 +4,6 @@
  */
 import { Alert, Button, Flex, Form, Modal } from 'antd';
 import { useState } from 'react';
-import type { codecFor } from '../core/codecs.ts';
 import type { AnyRecord, Id } from '../core/data-provider.ts';
 import { setPath } from '../core/path.ts';
 import { decodeRecord } from '../core/payload.ts';
@@ -38,7 +37,7 @@ export function ResourceForm({
 }: ResourceFormProps) {
   const { env, ctx, registry, messages } = useInsta();
   const [modal, modalHolder] = Modal.useModal();
-  const codecs = registry.codecs as Parameters<typeof codecFor>[1];
+  const codecs = registry.codecs;
   const [form] = Form.useForm();
   const [initialValues] = useState(() =>
     decodeRecord(

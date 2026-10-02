@@ -51,7 +51,7 @@ export interface FormFieldsProps {
 
 export function FormFields({ fields, mode, form, values, record }: FormFieldsProps) {
   const { ctx, registry, messages } = useInsta();
-  const codecs = registry.codecs as Parameters<typeof codecFor>[1];
+  const codecs = registry.codecs;
 
   const rulesFor = (field: NormalizedField): Rule[] => {
     const codec = codecFor(field.type, codecs);
@@ -72,7 +72,7 @@ export function FormFields({ fields, mode, form, values, record }: FormFieldsPro
       rules.push({
         validator: async (_, v) => {
           if (isEmptyValue(codec, v)) return; // emptiness is `required`'s job
-          const message = await validate(v, form.getFieldsValue(true) as never);
+          const message = await validate(v, form.getFieldsValue(true));
           if (message) throw new Error(message);
         },
       });

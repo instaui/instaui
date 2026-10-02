@@ -10,6 +10,7 @@ import { safeUrl } from '../../core/safe-url.ts';
 import { useInsta } from '../../react/context.tsx';
 import { makeLink } from '../../react/router.ts';
 import { buildPath } from '../../react/routes.ts';
+import { antdRegistry } from '../registry.ts';
 import { RenderEnvContext } from './context.ts';
 
 export interface DisplayProps {
@@ -23,7 +24,7 @@ export interface DisplayProps {
 
 function TextDisplay({ value, field }: DisplayProps) {
   const { env, registry } = useInsta();
-  const codecs = registry.codecs as Parameters<typeof codecFor>[1];
+  const codecs = registry.codecs;
   return <>{codecFor(field.type, codecs).toText(value, { ...env, props: field.props })}</>;
 }
 
@@ -161,7 +162,7 @@ export function FieldDisplay(props: DisplayProps): ReactNode {
   const key = typeof custom === 'string' ? custom : defaultDisplayFor(props.field);
   const displays = {
     ...builtinDisplays,
-    ...(registry.displays as Record<string, ComponentType<DisplayProps>> | undefined),
+    ...antdRegistry(registry).displays,
   };
   const Display = displays[key] ?? TextDisplay;
   return <Display {...props} />;

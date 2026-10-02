@@ -37,7 +37,7 @@ export function useResourceSubmit(resourceName: string) {
       original?: AnyRecord;
       id?: Id;
     }): Promise<SubmitResult> => {
-      const invalid = await resource.form?.validate?.(values as never, { mode, ctx });
+      const invalid = await resource.form?.validate?.(values, { mode, ctx });
       if (hasErrors(invalid))
         return { ok: false, fieldErrors: invalid, message: messages.formInvalid };
 

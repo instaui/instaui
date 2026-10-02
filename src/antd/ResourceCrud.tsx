@@ -219,9 +219,7 @@ function ResourceCrudView({
             ? {
                 keys: selection.keys,
                 onChange: (keys, selected) => setSelection({ keys, rows: selected }),
-                isSelectable: selectable
-                  ? (r) => conditionMet(selectable as never, r as never, ctx, r)
-                  : undefined,
+                isSelectable: selectable ? (r) => conditionMet(selectable, r, ctx, r) : undefined,
               }
             : undefined
         }

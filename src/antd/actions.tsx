@@ -86,7 +86,7 @@ export function actionVisible(
 ): boolean {
   if (!allowed(action.key, record)) return false;
   return action.custom?.visibleIf
-    ? conditionMet(action.custom.visibleIf as never, (record ?? {}) as never, ctx, record)
+    ? conditionMet(action.custom.visibleIf, record ?? {}, ctx, record)
     : true;
 }
 
@@ -96,7 +96,7 @@ export function actionDisabled(
   ctx: Record<string, unknown>,
 ): boolean {
   return action.custom?.disabledIf
-    ? conditionMet(action.custom.disabledIf as never, (record ?? {}) as never, ctx, record)
+    ? conditionMet(action.custom.disabledIf, record ?? {}, ctx, record)
     : false;
 }
 

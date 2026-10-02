@@ -64,7 +64,7 @@ export function FilterBar({ resource, list, onListChange, savedViews = false }: 
     const label = field?.label ?? fieldKey;
     const text = (v: unknown) =>
       field
-        ? codecFor(field.type, registry.codecs as never).toText(v, { ...env, props: field.props })
+        ? codecFor(field.type, registry.codecs).toText(v, { ...env, props: field.props })
         : String(v);
     const parts = items.map(({ op, value }) => {
       switch (op) {

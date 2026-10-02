@@ -5,6 +5,8 @@ import type { ComponentType } from 'react';
 import type { AnyRecord, Id } from '../../core/data-provider.ts';
 import type { FormMode, NormalizedField } from '../../core/resource.ts';
 import type { Where } from '../../core/where.ts';
+import type { InstaRegistry } from '../../react/context.tsx';
+import { antdRegistry } from '../registry.ts';
 import { RelationSelect } from '../RelationSelect.tsx';
 
 export interface WidgetProps {
@@ -129,7 +131,7 @@ export const builtinWidgets: Record<string, ComponentType<WidgetProps>> = {
       style={{ width: '100%' }}
       mode={field.props.multiple ? 'multiple' : undefined}
       allowClear
-      value={value as never}
+      value={value as string | number | (string | number)[] | undefined}
       disabled={disabled}
       placeholder={field.placeholder}
       options={(field.props.options ?? []).map((o) => ({
@@ -206,13 +208,13 @@ const DEFAULT_WIDGET: Record<string, string> = {
 
 export function resolveWidget(
   field: NormalizedField,
-  registry: Record<string, unknown>,
+  registry: InstaRegistry,
 ): ComponentType<WidgetProps> {
   const custom = field.widget;
   if (typeof custom === 'function') return custom as ComponentType<WidgetProps>;
   const widgets = {
     ...builtinWidgets,
-    ...(registry.widgets as Record<string, ComponentType<WidgetProps>> | undefined),
+    ...antdRegistry(registry).widgets,
   };
   const key = typeof custom === 'string' ? custom : (DEFAULT_WIDGET[field.type] ?? 'input');
   return widgets[key] ?? builtinWidgets.input!;

@@ -5,7 +5,6 @@
  */
 import { Alert, Button, Flex, Form, Input, Typography } from 'antd';
 import { useMemo, useState } from 'react';
-import type { codecFor } from '../core/codecs.ts';
 import type { AnyRecord } from '../core/data-provider.ts';
 import { errorMessage, isHttpError } from '../core/http-error.ts';
 import { buildSubmitPayload, decodeRecord } from '../core/payload.ts';
@@ -43,7 +42,7 @@ export function ActionForm({
   onCancel,
 }: ActionFormProps) {
   const { env, ctx, registry, messages } = useInsta();
-  const codecs = registry.codecs as Parameters<typeof codecFor>[1];
+  const codecs = registry.codecs;
   // A throwaway resource gives the fields the same normalisation and codecs as resource forms.
   const resource = useMemo(
     () => normalizeResource({ name: id, fields: config.fields, form: { emptyValue: 'omit' } }),
