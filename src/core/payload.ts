@@ -80,7 +80,9 @@ export function buildSubmitPayload<T extends object>({
       payload = setPath(payload, field.key, encoded);
     }
   }
-  return resource.form?.beforeSubmit ? resource.form.beforeSubmit(payload, { mode, ctx }) : payload;
+  return resource.form?.beforeSubmit
+    ? resource.form.beforeSubmit(payload, { mode, ctx, record: original })
+    : payload;
 }
 
 /** Decodes a record into initial form values. Fields hidden in this mode are skipped. */

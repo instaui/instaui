@@ -57,6 +57,7 @@ export type {
   NormalizedResource,
   ResourceAction,
   ResourceDefinition,
+  SubmitInfo,
   Validator,
 } from './core/resource.ts';
 export {

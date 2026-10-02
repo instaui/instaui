@@ -175,6 +175,13 @@ export interface ActionDefinition<T = AnyRecord> {
 export type ResourceAction<T = AnyRecord> =
   BuiltinAction | BuiltinActionConfig | ActionDefinition<T>;
 
+/** Passed to submit hooks. `record` is the record being edited (undefined on create). */
+export interface SubmitInfo {
+  mode: FormMode;
+  ctx: InstaContext;
+  record?: AnyRecord;
+}
+
 export type Validator<T> = (
   values: T,
   info: { mode: FormMode; ctx: InstaContext },
@@ -213,7 +220,7 @@ export interface ResourceDefinition<T extends object = AnyRecord> {
     title?: { create?: string; edit?: string };
     validate?: Validator<T>;
     /** Escape hatch run after encoding; prefer field codecs. Defaults `patch` to `'full'`. */
-    beforeSubmit?: (payload: AnyRecord, info: { mode: FormMode; ctx: InstaContext }) => AnyRecord;
+    beforeSubmit?: (payload: AnyRecord, info: SubmitInfo) => AnyRecord;
     patch?: 'diff' | 'full';
     /** What an update sends for an empty value: `'null'` (default: clears it) or `'omit'` (sends nothing). */
     emptyValue?: 'null' | 'omit';
@@ -223,7 +230,7 @@ export interface ResourceDefinition<T extends object = AnyRecord> {
      */
     validatePayload?: (
       payload: AnyRecord,
-      info: { mode: FormMode; ctx: InstaContext },
+      info: SubmitInfo,
     ) => FieldErrors | string | undefined | Promise<FieldErrors | string | undefined>;
   };
   detail?: { container?: ContainerOptions };

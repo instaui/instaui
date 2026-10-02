@@ -61,7 +61,7 @@ export function useResourceSubmit(resourceName: string) {
       if (resource.form?.validatePayload) {
         let result: FieldErrors | string | undefined;
         try {
-          result = await resource.form.validatePayload(payload, { mode, ctx });
+          result = await resource.form.validatePayload(payload, { mode, ctx, record: original });
         } catch (error) {
           result = errorMessage(error, messages.formInvalid);
         }

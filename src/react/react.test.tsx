@@ -302,7 +302,11 @@ describe('submit options for migrating apps', () => {
       return undefined;
     });
     const { submit, update } = renderSubmit(
-      make({ patch: 'full', beforeSubmit: (p) => ({ ...p, extra: true }), validatePayload }),
+      make({
+        patch: 'full',
+        beforeSubmit: (p, { record }) => ({ ...p, extra: record?.title === 'A' }),
+        validatePayload,
+      }),
     );
     const original = { id: 1, title: 'A' };
     const run = (title: string) =>
