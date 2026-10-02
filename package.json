@@ -1,7 +1,7 @@
 {
   "name": "instaui",
   "version": "0.0.14",
-  "description": "Config-first CRUD for antd: define resources in TypeScript or JSON, get list, filters, forms, detail, actions and permissions.",
+  "description": "Turn a REST API into a complete admin app by describing its resources: lists, filters, forms, detail views and actions for antd, without changing the API.",
   "keywords": [
     "antd",
     "antd6",
@@ -12,7 +12,10 @@
     "react",
     "config-driven",
     "server-driven-ui",
-    "data-provider"
+    "data-provider",
+    "rest-api",
+    "backoffice",
+    "internal-tools"
   ],
   "license": "MIT",
   "author": "kings1ay3r",

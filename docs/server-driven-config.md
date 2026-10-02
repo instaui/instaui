@@ -1,6 +1,8 @@
 # Server-driven config
 
-Every definition can be plain JSON: field types, widgets, displays and components are referenced by registry key, and conditions use [`Where`](where.md). A backend can therefore serve the admin's configuration.
+A definition can be plain JSON, so your backend can serve the admin's configuration: field types, widgets, displays and components are referenced by registry key, and conditions and access rules use [`Where`](where.md).
+
+What JSON cannot carry is code: field `validate`, `form.beforeSubmit` and action `run` are functions. Add those in the frontend with `mergeResource`, as below. Most rules don't need them: `required`, `requiredIf`, `visibleIf`, `readOnlyIf` and `access` all take JSON.
 
 ```tsx
 import {
