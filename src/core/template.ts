@@ -2,6 +2,7 @@
  * `{…}` templates, the only template syntax: `'{id}/approve'`, `'orgs/{ctx.orgId}/projects'`,
  * `'{name} ({code})'`. A placeholder is a dot path looked up by the caller.
  */
+import { isBlank } from './value.ts';
 
 const PLACEHOLDER = /\{([A-Za-z_$][\w$]*(?:\.[\w$]+)*)\}/g;
 
@@ -26,7 +27,7 @@ export function renderTemplate(
 ): string {
   return template.replace(PLACEHOLDER, (_match, path: string) => {
     const value = lookup(path);
-    if (value === undefined || value === null || value === '') {
+    if (isBlank(value)) {
       if (onMissing === 'throw')
         throw new TemplateError(`Template "${template}" has no value for {${path}}`);
       return '';

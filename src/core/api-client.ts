@@ -7,9 +7,7 @@ import {
   type RestRequest,
 } from './rest-provider.ts';
 import type { DataProvider } from './data-provider.ts';
-
-const isRecord = (v: unknown): v is Record<string, unknown> =>
-  v !== null && typeof v === 'object' && !Array.isArray(v);
+import { isRecord } from './value.ts';
 
 /** The client shape apps already have: axios-like methods returning the parsed body. */
 export interface ApiClientLike {

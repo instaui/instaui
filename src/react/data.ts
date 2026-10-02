@@ -26,6 +26,7 @@ import { getPath } from '../core/path.ts';
 import type { NormalizedField } from '../core/resource.ts';
 import type { Where } from '../core/where.ts';
 import { useInsta, useResource } from './context.tsx';
+import { valuesOf } from '../core/value.ts';
 
 const isEmptyWhere = (w: Where | undefined) => !w || Object.keys(w).length === 0;
 
@@ -129,9 +130,8 @@ export function useRelatedRecords(rows: AnyRecord[], fields: NormalizedField[]) 
       if (!target || !resources.has(target)) continue;
       for (const row of rows) {
         const raw = getPath(row, field.key);
-        for (const item of Array.isArray(raw) ? raw : [raw]) {
-          if (item === undefined || item === null || item === '' || typeof item === 'object')
-            continue;
+        for (const item of valuesOf(raw)) {
+          if (typeof item === 'object') continue;
           if (!byTarget.has(target)) byTarget.set(target, new Set());
           byTarget.get(target)!.add(String(item));
         }

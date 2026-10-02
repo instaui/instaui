@@ -10,6 +10,9 @@ import { useCallback, useMemo } from 'react';
 import type { ListState } from '../core/list-state.ts';
 import { useInsta, useResource } from './context.tsx';
 
+/** Where a resource lives when nothing says otherwise: `/{name}`. */
+export const defaultBasePathOf = (name: string) => `/${name}`;
+
 export interface ResourcePaths {
   detail?: string;
   edit?: string;

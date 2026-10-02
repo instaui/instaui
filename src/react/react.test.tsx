@@ -6,6 +6,7 @@ import { defineResource } from '../core/resource.ts';
 import { isAllowed, useCan } from './access.ts';
 import { InstaProvider, useResource, useScopedConfig } from './context.tsx';
 import { useRecordsByIds, useRelationOptions, useResourceList, useResourceRecord } from './data.ts';
+import { useLink } from './link.ts';
 import { createRouterAdapter, memoryAdapter } from './router.ts';
 import { buildPath, matchView, useResourceRouting } from './routes.ts';
 import { useResourceSubmit } from './submit.ts';
@@ -72,6 +73,16 @@ describe('router adapters', () => {
     expect(result.current.location).toEqual({ pathname: '/x', search: '?q=1' });
     result.current.navigate('/y', { replace: true });
     expect(navigate).toHaveBeenCalledWith('/y', { replace: true });
+  });
+});
+
+describe('useLink', () => {
+  test('is the same component every render, so links are not remounted', () => {
+    const { wrapper } = setup();
+    const { result, rerender } = renderHook(() => useLink(), { wrapper });
+    const first = result.current;
+    rerender();
+    expect(result.current).toBe(first);
   });
 });
 

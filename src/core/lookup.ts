@@ -17,6 +17,7 @@ import {
 } from './data-provider.ts';
 import { HttpError } from './http-error.ts';
 import { warn } from './warn.ts';
+import { pageOf } from './value.ts';
 
 /** Rows fetched per page when paging through a list. */
 export const LOOKUP_PAGE_SIZE = 100;
@@ -127,7 +128,7 @@ export function withListFallbacks(base: DataProvider): DataProvider {
       if (params.pagination.mode !== 'offset') return { data: rows as T[], total: rows.length };
       const { page, pageSize } = params.pagination;
       return {
-        data: rows.slice((page - 1) * pageSize, page * pageSize) as T[],
+        data: pageOf(rows, page, pageSize) as T[],
         total: rows.length,
       };
     },

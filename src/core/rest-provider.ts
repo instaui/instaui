@@ -25,6 +25,7 @@ import { getPath } from './path.ts';
 import { withListFallbacks } from './lookup.ts';
 import { renderTemplate } from './template.ts';
 import { toConditions } from './where.ts';
+import { isBlank, isRecord } from './value.ts';
 
 export interface RestRequest {
   method: HttpMethod;
@@ -59,9 +60,6 @@ export interface RestProviderOptions {
   mapError?: (status: number, body: unknown, statusText: string) => HttpError;
   updateMethod?: 'PATCH' | 'PUT';
 }
-
-const isRecord = (v: unknown): v is AnyRecord =>
-  v !== null && typeof v === 'object' && !Array.isArray(v);
 
 export function resourcePath(resource: ResourceRef, ctx: InstaContext): string {
   const template = resource.api.path ?? resource.name;
@@ -187,7 +185,7 @@ export function defaultMapError(status: number, body: unknown, statusText: strin
 function buildQuery(query: Record<string, QueryValue> | undefined): string {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(query ?? {})) {
-    if (value === undefined || value === null || value === '') continue;
+    if (isBlank(value)) continue;
     if (Array.isArray(value)) value.forEach((v) => search.append(key, String(v)));
     else search.append(key, String(value));
   }

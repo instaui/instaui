@@ -6,6 +6,7 @@
  * from a server, and neither code evaluation nor user-supplied regular expressions are allowed.
  */
 import { getPath } from './path.ts';
+import { isBlank } from './value.ts';
 
 /** Reference to a value in the evaluation scope: `values.x`, `record.x` or `ctx.x`. */
 export interface VarRef {
@@ -101,8 +102,7 @@ export function resolveVar(ref: VarRef, scope: WhereScope): unknown {
 const operand = (value: unknown, scope: WhereScope) =>
   isVarRef(value) ? resolveVar(value, scope) : value;
 
-const isEmptyValue = (v: unknown) =>
-  v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0);
+const isEmptyValue = (v: unknown) => isBlank(v) || (Array.isArray(v) && v.length === 0);
 
 function comparable(a: unknown, b: unknown): boolean {
   return (

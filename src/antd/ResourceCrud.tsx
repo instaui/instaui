@@ -16,7 +16,7 @@ import type { Where } from '../core/where.ts';
 import { InstaConfigOverride, useInsta, useResource, useScopedConfig } from '../react/context.tsx';
 import { andWhere, useResourceList, useResourceRecord } from '../react/data.ts';
 import { memoryAdapter } from '../react/router.ts';
-import { useResourceRouting, type ResourcePaths } from '../react/routes.ts';
+import { defaultBasePathOf, useResourceRouting, type ResourcePaths } from '../react/routes.ts';
 import { BulkBar } from './crud/BulkBar.tsx';
 import { ListHeader } from './crud/ListHeader.tsx';
 import { useOverrides } from './crud/overrides.ts';
@@ -52,8 +52,6 @@ export interface ResourceCrudProps {
   /** Initial values for records created here, in wire format. */
   defaults?: AnyRecord;
 }
-
-const defaultBasePathOf = (name: string) => `/${name}`;
 
 export function ResourceCrud(props: ResourceCrudProps) {
   const outer = useInsta().router.useRouter();
