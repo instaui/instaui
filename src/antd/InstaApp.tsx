@@ -15,15 +15,15 @@ export interface InstaAppProps
   extends Omit<InstaProviderProps, 'dataProvider' | 'apiClient' | 'children'>, InstaAdminProps {
   /** An axios-style client (`get`, `post`, `patch`, `delete` resolving to the body). */
   apiClient?: ApiClientLike;
-  /** The backend's conventions: `encodeList`, `decodeList`, `mapError`, … Read once, at mount. */
-  api?: Omit<RestProviderOptions, 'request'>;
-  /** A complete data provider instead of `apiClient` + `api`. */
+  /** The REST conventions, when they differ from the defaults: `encodeList`, `decodeList`, `mapError`, … Read once, at mount. */
+  rest?: Omit<RestProviderOptions, 'request'>;
+  /** A complete data provider instead of `apiClient` + `rest`. */
   dataProvider?: DataProvider;
 }
 
 export function InstaApp({
   apiClient,
-  api,
+  rest,
   dataProvider,
   basePath,
   title,
@@ -31,7 +31,7 @@ export function InstaApp({
   slots,
   ...provider
 }: InstaAppProps) {
-  const [options] = useState(api);
+  const [options] = useState(rest);
   const resolved = useMemo(
     () =>
       dataProvider ?? (apiClient ? fromApiClient(apiClient, options) : createRestProvider(options)),

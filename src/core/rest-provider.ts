@@ -36,8 +36,7 @@ export interface RestRequest {
   responseType?: 'json' | 'blob' | 'text';
 }
 
-export type RestOperation =
-  'list' | 'one' | 'create' | 'update' | 'delete' | 'updateMany' | 'deleteMany';
+export type RestOperation = 'list' | 'one' | 'create' | 'update' | 'delete';
 
 export interface RestProviderOptions {
   baseUrl?: string;
@@ -54,7 +53,7 @@ export interface RestProviderOptions {
   decodeOne?: (raw: unknown, resource: ResourceRef) => AnyRecord;
   encodeBody?: (
     data: AnyRecord,
-    info: { op: 'create' | 'update' | 'updateMany'; resource: ResourceRef },
+    info: { op: 'create' | 'update'; resource: ResourceRef },
   ) => unknown;
   /** Maps a failed `fetch` response to an `HttpError`. */
   mapError?: (status: number, body: unknown, statusText: string) => HttpError;

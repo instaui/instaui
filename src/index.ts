@@ -1,9 +1,8 @@
 // instaui: config-first CRUD for antd. The single entry point.
 
 // ── core ─────────────────────────────────────────────────────────────────────
-export { builtinCodecs, CodecError, setupDayjs } from './core/codecs.ts';
+export { builtinCodecs, CodecError } from './core/codecs.ts';
 export type { CodecContext, CodecEnv, FieldCodec, Timezone } from './core/codecs.ts';
-export { recordId } from './core/data-provider.ts';
 export { withListFallbacks } from './core/lookup.ts';
 export type {
   AnyRecord,
@@ -21,9 +20,8 @@ export type {
   ResourceRef,
   SortSpec,
 } from './core/data-provider.ts';
-export { errorMessage, HttpError, isHttpError } from './core/http-error.ts';
+export { HttpError, isHttpError } from './core/http-error.ts';
 export type { FieldErrors, HttpErrorInit } from './core/http-error.ts';
-export { recordLabel } from './core/label.ts';
 export { defaultUrlCodec, paramUrlCodec, passthroughUrlCodec } from './core/list-state.ts';
 export type { ListDefaults, ListState, ParamUrlCodecOptions, UrlCodec } from './core/list-state.ts';
 export { mergeResource } from './core/merge-resource.ts';
@@ -33,7 +31,7 @@ export type { ConfigIssue, ValidateOptions } from './core/validate-config.ts';
 export { createMemoryProvider } from './core/memory-provider.ts';
 export type { MemoryProviderOptions } from './core/memory-provider.ts';
 export { resourceKeys } from './core/query-keys.ts';
-export { conditionMet, defineResource, normalizeResource } from './core/resource.ts';
+export { defineResource } from './core/resource.ts';
 export type {
   AccessRule,
   BuiltinFieldType,
@@ -78,15 +76,7 @@ export {
 export { fromApiClient } from './core/api-client.ts';
 export type { ApiClientLike } from './core/api-client.ts';
 export type { RestOperation, RestProviderOptions, RestRequest } from './core/rest-provider.ts';
-export { safeUrl } from './core/safe-url.ts';
-export { renderTemplate, TemplateError } from './core/template.ts';
-export {
-  evaluateWhere,
-  fromConditions,
-  resolveVars,
-  toConditions,
-  WhereError,
-} from './core/where.ts';
+export { evaluateWhere, toConditions, WhereError } from './core/where.ts';
 export type {
   Condition as WhereCondition,
   Operator,
@@ -98,14 +88,8 @@ export type {
 } from './core/where.ts';
 
 // ── react ────────────────────────────────────────────────────────────────────
-export { isAllowed, useCan } from './react/access.ts';
-export {
-  createInstaQueryClient,
-  InstaProvider,
-  useApiClient,
-  useInsta,
-  useResource,
-} from './react/context.tsx';
+export { useCan } from './react/access.ts';
+export { InstaProvider, useApiClient, useInsta, useResource } from './react/context.tsx';
 export type {
   AccessAction,
   AccessCheck,
@@ -114,9 +98,6 @@ export type {
   InstaRegistry,
 } from './react/context.tsx';
 export {
-  andWhere,
-  fetchRecordsByIds,
-  useRecordsByIds,
   useRelationOptions,
   useResourceList,
   useResourceMutations,
@@ -134,8 +115,7 @@ export type {
   RouterHooks,
   RouterLocation,
 } from './react/router.ts';
-export { buildPath, matchView, useResourceRouting } from './react/routes.ts';
-export type { ResourcePaths, ResourceRouting, ResourceView } from './react/routes.ts';
+export type { ResourcePaths } from './react/routes.ts';
 export { useResourceSubmit } from './react/submit.ts';
 export type { SubmitResult } from './react/submit.ts';
 
@@ -144,8 +124,6 @@ export { builtinDisplays, FieldDisplay } from './antd/fields/displays.tsx';
 export type { DisplayProps } from './antd/fields/displays.tsx';
 export { builtinWidgets } from './antd/fields/widgets.tsx';
 export type { WidgetProps } from './antd/fields/widgets.tsx';
-export { FilterControl } from './antd/fields/filters.tsx';
-export type { FilterControlProps } from './antd/fields/filters.tsx';
 export { InstaAdmin } from './antd/InstaAdmin.tsx';
 export { InstaApp } from './antd/InstaApp.tsx';
 export type { InstaAppProps } from './antd/InstaApp.tsx';
@@ -163,5 +141,3 @@ export {
   UnstableResourceForm as unstable_ResourceForm,
 } from './antd/unstable.tsx';
 export type { UnstableResourceDetailProps, UnstableResourceFormProps } from './antd/unstable.tsx';
-export { FilterBar } from './antd/FilterBar.tsx';
-export type { FilterBarProps } from './antd/FilterBar.tsx';

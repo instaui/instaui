@@ -65,4 +65,4 @@ Security rules for configs:
 - **Strings are never evaluated as code.**
 - **There is no `$regex` or `$where`.**
 - **Custom request paths must be relative** to the provider's base URL.
-- **Links go through `safeUrl`.**
+- **Links are sanitised.**

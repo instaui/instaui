@@ -51,8 +51,8 @@ export interface FieldProps {
   searchFields?: string[];
   /** relation: extra filter for options; may reference `{ $var: 'values.x' }` */
   params?: Where;
-  /** relation: how a value links to its record */
-  link?: 'route' | 'drawer' | 'none';
+  /** relation: whether a value links to its record's route (default) or is plain text */
+  link?: 'route' | 'none';
   /** text */
   trim?: boolean;
   /** number */
@@ -124,7 +124,6 @@ export interface FieldDefinition<T = AnyRecord> {
   widget?: unknown;
   /** Read-only renderer for cells and detail: registry key or component. */
   display?: unknown;
-  span?: 'half' | 'full' | number;
   /** `'whenVisible'` (default) drops hidden/read-only fields from the payload. */
   submit?: 'always' | 'whenVisible' | 'never';
 }
@@ -164,7 +163,8 @@ export interface ResourceDefinition<T extends object = AnyRecord> {
   api?: ResourceApi;
   /** `'page'` renders `components.page` and never fetches a list. */
   kind?: 'collection' | 'page';
-  menu?: boolean | { group?: string; order?: number; icon?: string };
+  /** In `InstaAdmin`'s menu (default true), optionally ordered: `{ order: 2 }`. */
+  menu?: boolean | { order?: number };
   fields: FieldDefinition<T>[];
   list?: {
     pageSize?: number;

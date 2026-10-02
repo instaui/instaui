@@ -9,7 +9,6 @@ export type ActionPlacement = 'row' | 'detail' | 'bulk' | 'toolbar';
 export interface BuiltinActionConfig<T = AnyRecord> {
   builtin: BuiltinAction;
   label?: string;
-  icon?: string;
   placement?: ActionPlacement[];
   confirm?: ActionConfirm<T>;
 }
@@ -90,7 +89,6 @@ export interface ActionDefinition<T = AnyRecord> {
   /** Also the access key: `access[id]`. */
   id: string;
   label: string;
-  icon?: string;
   danger?: boolean;
   placement: ActionPlacement[];
   visibleIf?: Condition<T>;
@@ -99,7 +97,8 @@ export interface ActionDefinition<T = AnyRecord> {
   /** Collect these inputs first; `run` receives them as `values`. Shown with `confirm`'s text. */
   form?: ActionForm<T>;
   run: (context: ActionContext<T>) => unknown | Promise<unknown>;
-  onSuccess?: 'refetch' | 'close' | 'none';
+  /** After `run` succeeds: refetch the resource's data (default), or leave it. */
+  onSuccess?: 'refetch' | 'none';
 }
 
 export type ResourceAction<T = AnyRecord> =

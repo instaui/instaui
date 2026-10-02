@@ -5,6 +5,15 @@ Note: versions `1.0.2` and `1.0.3` can never be published (npm reserved them fro
 
 ## 0.0.14
 
+### Breaking (a smaller, honest API)
+
+- **Removed options that did nothing:** `menu.group`, `menu.icon`, action `icon`, `onSuccess: 'close'`, field `span`, `props.link: 'drawer'`, and the `updateMany` / `deleteMany` provider methods (bulk endpoints go through `custom`).
+- **Removed internal exports:** `setupDayjs`, `normalizeResource`, `conditionMet`, `resolveVars`, `fromConditions`, `renderTemplate`, `TemplateError`, `safeUrl`, `recordId`, `recordLabel`, `errorMessage`, `isAllowed` (use `useCan`), `andWhere`, `createInstaQueryClient`, `fetchRecordsByIds`, `useRecordsByIds`, `buildPath`, `matchView`, `useResourceRouting`, `FilterBar`, `FilterControl` (part of every table).
+- `InstaApp`'s REST conventions prop is `rest` (`resource.api` keeps meaning a resource's path and list key).
+- An action's dialog text is its `confirm`; `form.title` and `form.submitLabel` are gone.
+
+### Added
+
 - **Bulk actions:** custom actions with `placement: ['bulk']` add row checkboxes and run with `selection`. `list.selectable` limits which rows can be selected.
 - **Action forms:** `action.form` adds inputs (ordinary fields; optional unless `required`) to the action's dialog; `run` receives them as `values`. Server field errors land on the inputs.
 - `confirm` is the dialog for every action, with or without a form: `title`, `description`, `okText`, `danger`, `typeToConfirm`. Texts can be functions of `{ record, selection }`.

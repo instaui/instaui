@@ -105,23 +105,6 @@ export function createMemoryProvider(
       const rows = table(resource);
       rows.splice(rows.indexOf(find(resource, id)), 1);
     },
-    async updateMany({
-      resource,
-      ids,
-      data,
-    }: {
-      resource: ResourceRef;
-      ids: Id[];
-      data: AnyRecord;
-    }) {
-      await wait();
-      for (const id of ids) Object.assign(find(resource, id), data);
-    },
-    async deleteMany({ resource, ids }: { resource: ResourceRef; ids: Id[] }) {
-      await wait();
-      const remove = new Set(ids.map((id) => find(resource, id)));
-      db[resource.name] = table(resource).filter((r) => !remove.has(r));
-    },
     async custom() {
       throw new Error('createMemoryProvider does not implement custom()');
     },

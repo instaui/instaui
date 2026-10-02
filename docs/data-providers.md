@@ -1,6 +1,6 @@
 # Data providers
 
-instaui talks to your backend through a `DataProvider`: `getList`, `getOne`, `getMany?`, `create`, `update`, `deleteOne`, `updateMany?`, `deleteMany?` and `custom`.
+instaui talks to your backend through a `DataProvider`: `getList`, `getOne`, `getMany?`, `create`, `update`, `deleteOne` and `custom` (for anything else, such as bulk endpoints).
 
 ## REST
 

@@ -94,8 +94,6 @@ export interface DataProvider {
     params: BaseParams & { id: Id; data: AnyRecord; previousData?: T },
   ): Promise<{ data?: T }>;
   deleteOne<T = AnyRecord>(params: BaseParams & { id: Id; previousData?: T }): Promise<void>;
-  updateMany?(params: BaseParams & { ids: Id[]; data: AnyRecord }): Promise<void>;
-  deleteMany?(params: BaseParams & { ids: Id[] }): Promise<void>;
   custom<R = unknown>(params: CustomParams): Promise<R>;
 }
 

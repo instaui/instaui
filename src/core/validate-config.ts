@@ -63,7 +63,6 @@ const FIELD_KEYS = new Set([
   'resetOn',
   'widget',
   'display',
-  'span',
   'submit',
 ]);
 const BUILTIN_ACTIONS = new Set<BuiltinAction>(['create', 'detail', 'edit', 'delete']);

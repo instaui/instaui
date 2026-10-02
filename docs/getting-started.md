@@ -44,7 +44,7 @@ export const App = () => (
 );
 ```
 
-`InstaApp` routes with the browser URL and builds the data provider from the client. If your API's query parameters or envelopes differ from the defaults, pass them once as `api={{ encodeList, decodeList, … }}` (see [Data providers](data-providers.md)).
+`InstaApp` routes with the browser URL and builds the data provider from the client. If your API's query parameters or envelopes differ from the defaults, pass them once as `rest={{ encodeList, decodeList, … }}` (see [Data providers](data-providers.md)).
 
 ### Custom views
 
