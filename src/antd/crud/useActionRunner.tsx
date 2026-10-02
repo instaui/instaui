@@ -33,12 +33,6 @@ interface FormRun {
   selection?: AnyRecord[];
 }
 
-interface Opened {
-  content: ReactNode;
-  title?: string;
-  width?: number | string;
-}
-
 export interface ActionRunnerOptions {
   resource: NormalizedResource;
   routing: ResourceRouting;
@@ -68,7 +62,7 @@ export function useActionRunner({
   const { remove } = useResourceMutations(resource.name);
   const [confirm, setConfirm] = useState<ConfirmState>();
   const [formRun, setFormRun] = useState<FormRun>();
-  const [opened, setOpened] = useState<Opened>();
+  const content = useContentModal();
   const actions = useMemo(
     () =>
       resolveActions(resource, {
@@ -89,14 +83,14 @@ export function useActionRunner({
     refresh,
     navigate,
     notify,
-    open: (content, options) => setOpened({ content: content as ReactNode, ...options }),
+    open: (node, options) => content.open({ content: node as ReactNode, ...options }),
     openResource: (name, options = {}) =>
-      setOpened({
+      content.open({
         content: renderResource(name, options),
         title: options.title,
         width: options.width ?? 800,
       }),
-    close: () => setOpened(undefined),
+    close: content.close,
   });
 
   /** After a custom action: clear the selection it ran on, then refetch unless told not to. */
@@ -194,18 +188,34 @@ export function useActionRunner({
           />
         ) : null}
       </Modal>
-      <Modal
-        open={opened !== undefined}
-        title={opened?.title}
-        width={opened?.width}
-        footer={null}
-        onCancel={() => setOpened(undefined)}
-        destroyOnHidden
-      >
-        {opened?.content}
-      </Modal>
+      {content.modal}
     </>
   );
 
   return { actions, can, run, buttons, dialogs };
+}
+
+interface Opened {
+  content: ReactNode;
+  title?: string;
+  width?: number | string;
+}
+
+/** The modal an action's `open` / `openResource` show content in. */
+function useContentModal() {
+  const [opened, setOpened] = useState<Opened>();
+  const close = () => setOpened(undefined);
+  const modal = (
+    <Modal
+      open={opened !== undefined}
+      title={opened?.title}
+      width={opened?.width}
+      footer={null}
+      onCancel={close}
+      destroyOnHidden
+    >
+      {opened?.content}
+    </Modal>
+  );
+  return { open: setOpened, close, modal };
 }
