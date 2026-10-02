@@ -3,7 +3,7 @@
  * widgets as resource forms. Values are encoded like a create payload and handed to `run`; a
  * thrown `HttpError` with field errors puts them on the matching inputs.
  */
-import { Alert, Button, Flex, Form } from 'antd';
+import { Alert, Button, Flex, Form, Input, Typography } from 'antd';
 import { useMemo, useState } from 'react';
 import type { codecFor } from '../core/codecs.ts';
 import type { AnyRecord } from '../core/data-provider.ts';
@@ -21,6 +21,12 @@ export interface ActionFormProps {
   submitLabel: string;
   /** Wire-format initial values. */
   initial?: AnyRecord;
+  /** Shown above the inputs (the action's `confirm.description`). */
+  description?: string;
+  /** Red submit button. */
+  danger?: boolean;
+  /** The user must type this word before submitting. */
+  typeToConfirm?: string;
   onSubmit(values: AnyRecord): Promise<void>;
   onCancel(): void;
 }
@@ -30,6 +36,9 @@ export function ActionForm({
   config,
   submitLabel,
   initial,
+  description,
+  danger,
+  typeToConfirm,
   onSubmit,
   onCancel,
 }: ActionFormProps) {
@@ -46,6 +55,7 @@ export function ActionForm({
   const values = watched ?? initialValues;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  const [typed, setTyped] = useState('');
 
   return (
     <Form
@@ -75,11 +85,28 @@ export function ActionForm({
         }
       }}
     >
+      {description ? <Typography.Paragraph>{description}</Typography.Paragraph> : null}
       {error ? <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} /> : null}
       <FormFields fields={resource.fields} mode="create" form={form} values={values} />
+      {typeToConfirm ? (
+        <Form.Item>
+          <Input
+            aria-label={messages.typeToConfirm(typeToConfirm)}
+            placeholder={messages.typeToConfirm(typeToConfirm)}
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+          />
+        </Form.Item>
+      ) : null}
       <Flex justify="end" gap={8}>
         <Button onClick={onCancel}>{messages.cancel}</Button>
-        <Button type="primary" htmlType="submit" loading={busy}>
+        <Button
+          type="primary"
+          htmlType="submit"
+          danger={danger}
+          loading={busy}
+          disabled={typeToConfirm ? typed !== typeToConfirm : false}
+        >
           {submitLabel}
         </Button>
       </Flex>

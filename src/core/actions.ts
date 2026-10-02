@@ -6,22 +6,40 @@ import type { Where } from './where.ts';
 export type BuiltinAction = 'create' | 'detail' | 'edit' | 'delete';
 export type ActionPlacement = 'row' | 'detail' | 'bulk' | 'toolbar';
 
-export interface BuiltinActionConfig {
+export interface BuiltinActionConfig<T = AnyRecord> {
   builtin: BuiltinAction;
   label?: string;
   icon?: string;
   placement?: ActionPlacement[];
-  confirm?: ActionConfirm;
+  confirm?: ActionConfirm<T>;
 }
 
-export type ActionConfirm =
+/** What an action runs on: one record, or the selected rows of a bulk action. */
+export interface ActionTarget<T = AnyRecord> {
+  record?: T;
+  selection?: T[];
+}
+
+/** Text that may depend on the target, e.g. `({ selection }) => \`Archive ${selection?.length} orders?\``. */
+export type ActionText<T = AnyRecord> = string | ((target: ActionTarget<T>) => string);
+
+/** The text of an action's text slot for this target. */
+export const actionText = <T>(text: ActionText<T> | undefined, target: ActionTarget<T>) =>
+  typeof text === 'function' ? text(target) : text;
+
+/**
+ * Ask before running. With a `form`, this configures the form's dialog (its title, description,
+ * button and danger state) and the form adds the inputs.
+ */
+export type ActionConfirm<T = AnyRecord> =
   | boolean
   | {
-      title?: string;
-      description?: string;
+      title?: ActionText<T>;
+      description?: ActionText<T>;
+      /** The user must type this word before confirming. */
       typeToConfirm?: string;
       /** Confirm button text (default: the action's label; "Delete" for delete). */
-      okText?: string;
+      okText?: ActionText<T>;
       /** Red confirm button (default: the action's `danger`; true for delete). */
       danger?: boolean;
     };
@@ -56,15 +74,16 @@ export interface OpenResourceOptions {
   width?: number | string;
 }
 
-/** Inputs an action collects before it runs, e.g. a reason or a date. */
+/**
+ * Inputs an action collects before it runs, e.g. a reason or a date: ordinary fields, so each
+ * one's `required` decides whether it must be filled. The dialog's text is the action's `confirm`.
+ */
 export interface ActionForm<T = AnyRecord> {
   fields: FieldDefinition[];
-  title?: string;
-  /** Submit button text (default: the action's label). */
-  submitLabel?: string;
-  width?: number | string;
   /** Initial values, in wire format like a record. */
-  initialValues?: (context: { record?: T; selection?: T[] }) => AnyRecord;
+  initialValues?: (target: ActionTarget<T>) => AnyRecord;
+  /** Dialog width. */
+  width?: number | string;
 }
 
 export interface ActionDefinition<T = AnyRecord> {
@@ -76,12 +95,12 @@ export interface ActionDefinition<T = AnyRecord> {
   placement: ActionPlacement[];
   visibleIf?: Condition<T>;
   disabledIf?: Condition<T>;
-  confirm?: ActionConfirm;
-  /** Collect these inputs first; `run` receives them as `values`. Replaces `confirm`. */
+  confirm?: ActionConfirm<T>;
+  /** Collect these inputs first; `run` receives them as `values`. Shown with `confirm`'s text. */
   form?: ActionForm<T>;
   run: (context: ActionContext<T>) => unknown | Promise<unknown>;
   onSuccess?: 'refetch' | 'close' | 'none';
 }
 
 export type ResourceAction<T = AnyRecord> =
-  BuiltinAction | BuiltinActionConfig | ActionDefinition<T>;
+  BuiltinAction | BuiltinActionConfig<T> | ActionDefinition<T>;

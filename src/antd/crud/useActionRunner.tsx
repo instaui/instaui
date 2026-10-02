@@ -7,7 +7,13 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { recordId, type AnyRecord } from '../../core/data-provider.ts';
 import { errorMessage } from '../../core/http-error.ts';
 import type { NormalizedResource } from '../../core/resource.ts';
-import type { ActionContext, ActionDefinition, OpenResourceOptions } from '../../core/actions.ts';
+import {
+  actionText,
+  type ActionContext,
+  type ActionDefinition,
+  type ActionTarget,
+  type OpenResourceOptions,
+} from '../../core/actions.ts';
 import { useCan } from '../../react/access.ts';
 import { useInsta } from '../../react/context.tsx';
 import { useResourceMutations } from '../../react/data.ts';
@@ -105,19 +111,20 @@ export function useActionRunner({
     if (rowsOnPage <= 1 && list.page > 1) routing.setList({ ...list, page: list.page - 1 });
   };
 
-  const confirmFor = (action: ResolvedAction, exec: () => Promise<void>): ConfirmState => {
+  /** The dialog text of an action for this target: its `confirm`, else defaults. */
+  const dialogText = (action: ResolvedAction, target: ActionTarget) => {
     const options = typeof action.confirm === 'object' ? action.confirm : {};
     const isDelete = action.builtin === 'delete';
     return {
       title:
-        options.title ??
+        actionText(options.title, target) ??
         (isDelete ? messages.deleteConfirmTitle(resource.label.one.toLowerCase()) : action.label),
       description:
-        options.description ?? (isDelete ? messages.deleteConfirmDescription : undefined),
+        actionText(options.description, target) ??
+        (isDelete ? messages.deleteConfirmDescription : undefined),
       typeToConfirm: options.typeToConfirm,
-      okText: options.okText ?? (isDelete ? messages.delete : action.label),
+      okText: actionText(options.okText, target) ?? (isDelete ? messages.delete : action.label),
       danger: options.danger ?? action.danger ?? false,
-      run: exec,
     };
   };
 
@@ -143,7 +150,7 @@ export function useActionRunner({
         );
       }
     };
-    if (action.confirm) setConfirm(confirmFor(action, exec));
+    if (action.confirm) setConfirm({ ...dialogText(action, { record, selection }), run: exec });
     else void exec();
   };
 
@@ -163,12 +170,13 @@ export function useActionRunner({
       ));
 
   const form = formRun?.action.custom.form;
+  const formText = formRun ? dialogText(formRun.action, formRun) : undefined;
   const dialogs = (
     <>
       <ConfirmDialog state={confirm} onDone={() => setConfirm(undefined)} messages={messages} />
       <Modal
         open={formRun !== undefined}
-        title={form?.title ?? formRun?.action.label}
+        title={formText?.title}
         width={form?.width}
         footer={null}
         onCancel={() => setFormRun(undefined)}
@@ -178,7 +186,10 @@ export function useActionRunner({
           <ActionForm
             id={`${resource.name}.${formRun.action.key}`}
             config={form}
-            submitLabel={form.submitLabel ?? formRun.action.label}
+            submitLabel={formText!.okText}
+            description={formText!.description}
+            danger={formText!.danger}
+            typeToConfirm={formText!.typeToConfirm}
             initial={form.initialValues?.({ record: formRun.record, selection: formRun.selection })}
             onCancel={() => setFormRun(undefined)}
             onSubmit={async (values) => {

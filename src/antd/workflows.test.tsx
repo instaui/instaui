@@ -96,8 +96,8 @@ describe('action forms', () => {
           id: 'park',
           label: 'Park',
           placement,
+          confirm: { title: 'Park numbers' },
           form: {
-            title: 'Park numbers',
             fields: [
               { key: 'reason', type: 'text', required: true },
               { key: 'from', type: 'date' },
@@ -207,6 +207,80 @@ describe('embedded views', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Create' }));
     expect(((await screen.findByLabelText('Role')) as HTMLInputElement).value).toBe('viewer');
     expect(router.current().pathname).toBe('/teams/7');
+  });
+});
+
+describe('bulk confirmations and optional inputs are configuration', () => {
+  test('a bulk confirm can name the selection; cancelling does not run', async () => {
+    const run = vi.fn();
+    setup(
+      defineResource({
+        name: 'numbers',
+        fields: [{ key: 'number', type: 'text' }],
+        actions: [
+          {
+            id: 'park',
+            label: 'Park',
+            placement: ['bulk'],
+            confirm: {
+              title: ({ selection }) => `Park ${selection?.length} numbers?`,
+              okText: 'Park them',
+              danger: true,
+            },
+            run,
+          },
+        ],
+      }),
+    );
+    await screen.findByText('100');
+    fireEvent.click(checkboxIn(rowOf('100')));
+    fireEvent.click(checkboxIn(rowOf('200')));
+    fireEvent.click(screen.getByRole('button', { name: 'Park' }));
+    let dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Park 2 numbers?')).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(run).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Park' }));
+    dialog = (await screen.findAllByRole('dialog')).find((d) => !/-leave/.test(d.className))!;
+    const ok = within(dialog).getByRole('button', { name: 'Park them' });
+    expect(ok.className).toMatch(/dangerous/);
+    fireEvent.click(ok);
+    await waitFor(() => expect(run).toHaveBeenCalledTimes(1));
+    expect((run.mock.calls[0]![0] as ActionContext).selection).toHaveLength(2);
+  });
+
+  test('confirm gives the form its text; an input without required is optional', async () => {
+    const run = vi.fn();
+    setup(
+      defineResource({
+        name: 'numbers',
+        fields: [{ key: 'number', type: 'text' }],
+        actions: [
+          {
+            id: 'park',
+            label: 'Park',
+            placement: ['bulk'],
+            confirm: {
+              title: ({ selection }) => `Park ${selection?.length} number(s)`,
+              description: 'Parked numbers stop taking calls.',
+              okText: 'Park',
+            },
+            form: { fields: [{ key: 'reason', type: 'text' }] },
+            run,
+          },
+        ],
+      }),
+    );
+    await screen.findByText('100');
+    fireEvent.click(checkboxIn(rowOf('100')));
+    fireEvent.click(screen.getByRole('button', { name: 'Park' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(within(dialog).getByText('Park 1 number(s)')).toBeTruthy();
+    expect(within(dialog).getByText('Parked numbers stop taking calls.')).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Park' }));
+    await waitFor(() => expect(run).toHaveBeenCalledTimes(1));
+    expect((run.mock.calls[0]![0] as ActionContext).values).toEqual({});
   });
 });
 

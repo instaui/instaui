@@ -71,7 +71,7 @@ Handlers receive a stable `ActionContext` with these members:
 
 After a custom action succeeds, the resource's data is refreshed. Set `onSuccess: 'none'` to skip that.
 
-`confirm` takes `title`, `description`, `typeToConfirm`, `okText` (default: the action's label) and `danger` (default: the action's `danger`).
+`confirm` is the action's dialog: `title`, `description`, `okText` (default: the action's label), `danger` (default: the action's `danger`) and `typeToConfirm`. The texts can be strings or functions of `{ record, selection }`, such as `({ selection }) => \`Archive ${selection?.length} orders?\``.
 
 ### Bulk actions
 
@@ -79,7 +79,7 @@ A custom action with `placement: ['bulk']` adds row checkboxes and a bar above t
 
 ### Action forms
 
-`form` collects inputs before the action runs: a reason, a date, a quantity. Its fields are ordinary [field definitions](resources-and-fields.md), with the same types, rules, `visibleIf` and widgets. Their values reach `run` as `values`, encoded like a create payload (dates as `YYYY-MM-DD`, empty values left out). A thrown `HttpError` with field errors puts them on the inputs and keeps the form open.
+`form` adds inputs to that dialog: a reason, a date, a quantity. The dialog's text still comes from `confirm`. Its fields are ordinary [field definitions](resources-and-fields.md), with the same types, rules, `visibleIf` and widgets, so an input is optional unless it is `required`. Their values reach `run` as `values`, encoded like a create payload (dates as `YYYY-MM-DD`, empty values left out). A thrown `HttpError` with field errors puts them on the inputs and keeps the form open.
 
 ```tsx
 import { defineResource } from 'instaui';
@@ -108,9 +108,13 @@ export const devices = defineResource({
       danger: true,
       placement: ['bulk', 'row'],
       visibleIf: { state: 'IN_STOCK' },
+      confirm: {
+        title: ({ selection }) => `Retire ${selection?.length ?? 1} device(s)?`,
+        description: 'Retired devices can no longer be assigned.',
+      },
       form: {
-        title: 'Retire devices',
         fields: [
+          // Optional: drop `required: true` and the reason may be left empty.
           { key: 'reason', type: 'text', widget: 'textarea', required: true },
           { key: 'from', type: 'date' },
         ],
