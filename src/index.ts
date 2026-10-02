@@ -38,6 +38,7 @@ export type {
   ActionConfirm,
   ActionContext,
   ActionDefinition,
+  ActionForm,
   ActionPlacement,
   BuiltinAction,
   BuiltinActionConfig,
@@ -57,6 +58,7 @@ export type {
   NormalizedResource,
   ResourceAction,
   ResourceDefinition,
+  SubmitConfirm,
   SubmitInfo,
   Validator,
 } from './core/resource.ts';

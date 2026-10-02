@@ -3,10 +3,11 @@
  * resource, driven by its definition and the URL. Embeddable anywhere inside `<InstaProvider>`.
  */
 import { useQueryClient } from '@tanstack/react-query';
-import { Flex, Input, Modal, Result, Segmented, Spin, Typography } from 'antd';
+import { Button, Flex, Input, Modal, Result, Segmented, Spin, Typography } from 'antd';
 import {
   createElement,
   useCallback,
+  useEffect,
   useMemo,
   useState,
   type ComponentType,
@@ -17,11 +18,24 @@ import { recordId } from '../core/data-provider.ts';
 import { errorMessage } from '../core/http-error.ts';
 import { recordLabel } from '../core/label.ts';
 import { resourceKeys } from '../core/query-keys.ts';
-import type { ActionContext, NormalizedResource } from '../core/resource.ts';
+import {
+  conditionMet,
+  type ActionContext,
+  type ActionDefinition,
+  type NormalizedResource,
+} from '../core/resource.ts';
+import type { Where } from '../core/where.ts';
 import { useCan } from '../react/access.ts';
-import { useInsta, useResource } from '../react/context.tsx';
-import { useResourceList, useResourceMutations, useResourceRecord } from '../react/data.ts';
+import { InstaConfigOverride, useInsta, useResource } from '../react/context.tsx';
+import {
+  andWhere,
+  useResourceList,
+  useResourceMutations,
+  useResourceRecord,
+} from '../react/data.ts';
+import { memoryAdapter } from '../react/router.ts';
 import { useResourceRouting, type ResourcePaths } from '../react/routes.ts';
+import { ActionForm } from './ActionForm.tsx';
 import {
   ActionButton,
   actionDisabled,
@@ -58,21 +72,67 @@ export interface ResourceCrudProps {
   basePathOf?(resource: string): string;
   /** Rendered above the table, next to the title. */
   toolbar?: ReactNode;
+  /** The heading above the list (default: the resource's plural label); `false` hides it. */
+  title?: ReactNode | false;
+  /**
+   * Keep this view's list state and open record in component state instead of the URL, e.g. a
+   * child resource inside another resource's detail. Navigation by actions still uses the app's router.
+   */
+  embedded?: boolean;
+  /** Extra context for this view, merged over the provider's (path templates, access, `$var`). */
+  ctx?: InstaContext;
+  /** A filter always applied to this view, AND-ed with the user's (not shown in the filter bar). */
+  filter?: Where;
+  /** Initial values for records created here, in wire format. */
+  defaults?: AnyRecord;
 }
 
 const defaultBasePathOf = (name: string) => `/${name}`;
 
-export function ResourceCrud({
+export function ResourceCrud(props: ResourceCrudProps) {
+  const insta = useInsta();
+  const outer = insta.router.useRouter();
+  const { embedded, ctx: extraCtx } = props;
+  const base = props.basePath ?? (props.basePathOf ?? defaultBasePathOf)(props.resource);
+  const [localRouter] = useState(() => (embedded ? memoryAdapter(base) : undefined));
+  // Keyed by value, so an inline `ctx={{ id }}` does not change identity (and query keys) every render.
+  const ctxKey = extraCtx ? JSON.stringify(extraCtx) : '';
+  const ctx = useMemo(
+    () => (ctxKey ? { ...insta.ctx, ...(JSON.parse(ctxKey) as InstaContext) } : insta.ctx),
+    [insta.ctx, ctxKey],
+  );
+  const config = useMemo(
+    () => ({ ...insta, ctx, router: localRouter ?? insta.router }),
+    [insta, ctx, localRouter],
+  );
+  if (!localRouter && !extraCtx) return <ResourceCrudView {...props} navigate={outer.navigate} />;
+  return (
+    <InstaConfigOverride value={config}>
+      <ResourceCrudView {...props} navigate={outer.navigate} />
+    </InstaConfigOverride>
+  );
+}
+
+interface FormRun {
+  action: ResolvedAction & { custom: ActionDefinition };
+  record?: AnyRecord;
+  selection?: AnyRecord[];
+}
+
+function ResourceCrudView({
   resource: name,
   basePath,
   paths,
   basePathOf = defaultBasePathOf,
   toolbar,
-}: ResourceCrudProps) {
+  title,
+  filter: scope,
+  defaults,
+  navigate,
+}: ResourceCrudProps & { navigate(to: string): void }) {
   const resource = useResource(name);
-  const { dataProvider, ctx, messages, router, registry } = useInsta();
+  const { dataProvider, ctx, messages, registry } = useInsta();
   const { notify, holder } = useNotify();
-  const routerApi = router.useRouter();
   const base = basePath ?? basePathOf(name);
   const routing = useResourceRouting(name, base, paths);
   const can = useCan(name);
@@ -84,13 +144,25 @@ export function ResourceCrud({
     title?: string;
     width?: number | string;
   }>();
+  const [formRun, setFormRun] = useState<FormRun>();
+  const [selected, setSelected] = useState<{ keys: string[]; rows: AnyRecord[] }>({
+    keys: [],
+    rows: [],
+  });
 
   const actions = useMemo(() => resolveActions(resource, messages), [resource, messages]);
   const actionKeys = new Set(actions.map((a) => a.key));
   const { current, list } = routing;
   const id = current.view === 'detail' || current.view === 'edit' ? current.id : undefined;
 
-  const listQuery = useResourceList(name, list, { enabled: resource.kind === 'collection' });
+  const scopedList = useMemo(
+    () => (scope ? { ...list, filter: andWhere(list.filter, scope) } : list),
+    [list, scope],
+  );
+  const listQuery = useResourceList(name, scopedList, { enabled: resource.kind === 'collection' });
+  // A selection belongs to the rows on screen: any change to the list clears it.
+  const listKey = JSON.stringify(scopedList);
+  useEffect(() => setSelected({ keys: [], rows: [] }), [listKey]);
   const recordQuery = useResourceRecord(name, id);
   const record = recordQuery.data;
 
@@ -106,27 +178,32 @@ export function ResourceCrud({
     record: rec,
     refresh,
     close: routing.close,
-    navigate: (to) => routerApi.navigate(to),
+    navigate,
     notify,
   });
 
-  const actionContext = (rec?: AnyRecord): ActionContext => ({
+  const actionContext = (rec?: AnyRecord, selection?: AnyRecord[]): ActionContext => ({
     record: rec,
+    selection,
     resource: resource.ref,
     dataProvider,
     ctx,
     refresh,
-    navigate: (to) => routerApi.navigate(to),
+    navigate,
     notify,
     open: (content, options) => setOpened({ content: content as ReactNode, ...options }),
     close: () => setOpened(undefined),
   });
 
-  const runAction = (action: ResolvedAction, rec?: AnyRecord) => {
+  const runAction = (action: ResolvedAction, rec?: AnyRecord, selection?: AnyRecord[]) => {
     const rid = rec ? recordId(resource.ref, rec) : undefined;
     if (action.builtin === 'create') return routing.openCreate();
     if (action.builtin === 'detail' && rid !== undefined) return routing.openDetail(rid);
     if (action.builtin === 'edit' && rid !== undefined) return routing.openEdit(rid);
+    if (action.custom?.form) {
+      setFormRun({ action: action as FormRun['action'], record: rec, selection });
+      return;
+    }
     const exec = async () => {
       try {
         if (action.builtin === 'delete' && rid !== undefined) {
@@ -137,7 +214,8 @@ export function ResourceCrud({
           const rows = listQuery.data?.data.length ?? 0;
           if (rows <= 1 && list.page > 1) routing.setList({ ...list, page: list.page - 1 });
         } else if (action.custom) {
-          await action.custom.run(actionContext(rec));
+          await action.custom.run(actionContext(rec, selection));
+          if (selection) setSelected({ keys: [], rows: [] });
           if ((action.custom.onSuccess ?? 'refetch') === 'refetch') await refresh();
         }
       } catch (error) {
@@ -159,6 +237,8 @@ export function ResourceCrud({
           options.description ??
           (action.builtin === 'delete' ? messages.deleteConfirmDescription : undefined),
         typeToConfirm: options.typeToConfirm,
+        okText: options.okText ?? (action.builtin === 'delete' ? messages.delete : action.label),
+        danger: options.danger ?? action.danger ?? false,
         run: exec,
       });
     } else void exec();
@@ -209,6 +289,8 @@ export function ResourceCrud({
   if (!can('list')) return <Result status="403" title={messages.notAllowed} />;
 
   const canOpenDetail = actionKeys.has('detail') && can('detail');
+  const bulkActions = actions.filter((a) => a.custom && a.placement.includes('bulk') && can(a.key));
+  const selectable = resource.list.selectable;
   const formContainer = resource.form?.container ?? { type: 'modal', width: 640 };
   const detailContainer = resource.detail?.container ?? { type: 'drawer', width: 560 };
   const formMode =
@@ -239,9 +321,13 @@ export function ResourceCrud({
     <div>
       {holder}
       <Flex justify="space-between" align="center" gap={12} wrap style={{ marginBottom: 16 }}>
-        <Typography.Title level={4} style={{ margin: 0 }}>
-          {resource.label.other}
-        </Typography.Title>
+        {title === false ? (
+          <span />
+        ) : (
+          <Typography.Title level={4} style={{ margin: 0 }}>
+            {title ?? resource.label.other}
+          </Typography.Title>
+        )}
         <Flex gap={8} align="center" wrap>
           {resource.list.search ? (
             <Input.Search
@@ -289,9 +375,41 @@ export function ResourceCrud({
         />
       ) : null}
 
+      {bulkActions.length > 0 ? (
+        <Flex align="center" gap={8} wrap style={{ marginBottom: 12 }}>
+          <Typography.Text type="secondary">
+            {messages.selected(selected.keys.length)}
+          </Typography.Text>
+          {bulkActions.map((a) => (
+            <ActionButton
+              key={a.key}
+              action={a}
+              disabled={selected.keys.length === 0}
+              onClick={() => runAction(a, undefined, selected.rows)}
+            />
+          ))}
+          {selected.keys.length > 0 ? (
+            <Button type="link" size="small" onClick={() => setSelected({ keys: [], rows: [] })}>
+              {messages.clearSelection}
+            </Button>
+          ) : null}
+        </Flex>
+      ) : null}
+
       <ResourceTable
         resource={resource}
         rows={rows}
+        selection={
+          bulkActions.length > 0
+            ? {
+                keys: selected.keys,
+                onChange: (keys, selectedRows) => setSelected({ keys, rows: selectedRows }),
+                isSelectable: selectable
+                  ? (r) => conditionMet(selectable as never, r as never, ctx, r)
+                  : undefined,
+              }
+            : undefined
+        }
         total={listQuery.data?.total}
         loading={listQuery.isFetching}
         list={list}
@@ -376,6 +494,7 @@ export function ResourceCrud({
             mode={formMode}
             record={formMode === 'edit' ? record : undefined}
             id={id}
+            defaults={defaults}
             notify={notify}
             onCancel={routing.close}
             onDone={routing.close}
@@ -384,6 +503,34 @@ export function ResourceCrud({
       </Container>
 
       <ConfirmDialog state={confirm} onDone={() => setConfirm(undefined)} messages={messages} />
+      <Modal
+        open={formRun !== undefined}
+        title={formRun ? (formRun.action.custom.form!.title ?? formRun.action.label) : undefined}
+        width={formRun?.action.custom.form!.width}
+        footer={null}
+        onCancel={() => setFormRun(undefined)}
+        destroyOnHidden
+      >
+        {formRun ? (
+          <ActionForm
+            id={`${name}.${formRun.action.key}`}
+            config={formRun.action.custom.form!}
+            submitLabel={formRun.action.custom.form!.submitLabel ?? formRun.action.label}
+            initial={formRun.action.custom.form!.initialValues?.({
+              record: formRun.record,
+              selection: formRun.selection,
+            })}
+            onCancel={() => setFormRun(undefined)}
+            onSubmit={async (values) => {
+              const { action, record: rec, selection } = formRun;
+              await action.custom.run({ ...actionContext(rec, selection), values });
+              setFormRun(undefined);
+              if (selection) setSelected({ keys: [], rows: [] });
+              if ((action.custom.onSuccess ?? 'refetch') === 'refetch') await refresh();
+            }}
+          />
+        ) : null}
+      </Modal>
       <Modal
         open={opened !== undefined}
         title={opened?.title}

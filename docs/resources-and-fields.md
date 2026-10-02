@@ -57,7 +57,7 @@ export const orders = defineResource<Order>({
 | `datetime` | ISO 8601 with offset                          | Displayed in the provider's `timezone` (`'local'` or `'utc'`).                                                |
 | `time`     | `HH:mm:ss`                                    |                                                                                                               |
 | `enum`     | value, or array with `props.multiple`         | Lists and detail show the option **label**. Display `tag` uses option colours.                                |
-| `tags`     | string array                                  |                                                                                                               |
+| `tags`     | string array                                  | `props.tokenSeparators` (e.g. `[',', '\n']`) splits pasted text into values.                                  |
 | `relation` | id, or ids with `props.multiple`              | `props.resource` names the target. Nested records are accepted and reduced to ids.                            |
 | `json`     | any JSON                                      | Edited as text, parsed on submit, never re-formatted while typing.                                            |
 
@@ -167,6 +167,7 @@ export const tickets = defineResource({
 - **`form.validatePayload(payload)`** validates the final payload, after encoding and `beforeSubmit`, for rules written against the API's shape. It returns field messages, a form-level message, or nothing.
 - **`form.beforeSubmit(payload, { mode, ctx, record })`** is an escape hatch for reshaping the payload. Prefer field types and codecs. Using it switches the default to full updates. `record` is the record being edited (undefined on create), and `validatePayload` receives the same second argument.
 - **`readOnlyIf` and `visibleIf` functions** receive `(values, ctx, record)`, so a field can lock depending on the stored record.
+- **`form.confirm(values, { mode, ctx, record })`** asks before saving. Return `{ title, description?, okText?, danger? }` to show a confirmation, or nothing to save straight away, e.g. `values.status === 'INACTIVE' && record?.status !== 'INACTIVE' ? { title: 'Deactivate this user?', danger: true } : undefined`.
 
 A strict update endpoint that accepts only some keys, and only for some records:
 

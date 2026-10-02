@@ -3,6 +3,15 @@
 All notable changes to this project are documented here. This project follows [Semantic Versioning](https://semver.org/).
 Note: versions `1.0.2` and `1.0.3` can never be published (npm reserved them from an unrelated 2016 package), so the release after `1.0.1` is `1.1.0`.
 
+## 0.0.14
+
+- **Bulk actions:** custom actions with `placement: ['bulk']` add row checkboxes and run with `selection`. `list.selectable` limits which rows can be selected.
+- **Action forms:** `action.form` collects inputs (any field types) before `run`, which receives them as `values`. Server field errors land on the inputs.
+- **Embedded views:** `<ResourceCrud embedded ctx={…} filter={…} defaults={…} title={…} />` renders a resource inside another view, with its own list state and context, without touching the URL.
+- `form.confirm(values, info)` asks before saving.
+- `confirm.okText` and `confirm.danger` for custom actions: a custom action's confirm no longer says "Delete".
+- `tags` fields accept `props.tokenSeparators`, so pasted lists split into values.
+
 ## 0.0.13
 
 - `form.emptyValue: 'omit'`: updates leave empty values out instead of sending `null`.

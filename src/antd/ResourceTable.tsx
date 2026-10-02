@@ -68,6 +68,12 @@ export interface ResourceTableProps {
   onRowOpen?(record: AnyRecord): void;
   renderActions?(record: AnyRecord): ReactNode;
   basePathOf(resource: string): string;
+  /** Row checkboxes, for bulk actions. */
+  selection?: {
+    keys: string[];
+    onChange(keys: string[], rows: AnyRecord[]): void;
+    isSelectable?(row: AnyRecord): boolean;
+  };
 }
 
 type Filter = Record<string, PredicateOps>;
@@ -82,12 +88,14 @@ export function ResourceTable({
   onRowOpen,
   renderActions,
   basePathOf,
+  selection,
 }: ResourceTableProps) {
   const { messages } = useInsta();
   const columns = useMemo(() => resource.fields.filter((f) => f.list !== false), [resource.fields]);
   const related = useRelatedRecords(rows, columns);
   const renderEnv = useMemo<RenderEnv>(() => ({ basePathOf, related }), [basePathOf, related]);
   const filter = list.filter as Filter;
+  const rowKey = (r: AnyRecord) => String(recordId(resource.ref, r) ?? JSON.stringify(r));
 
   const tableColumns = useMemo(() => {
     const cols: TableColumnType<AnyRecord>[] = columns.map((field) => {
@@ -163,7 +171,23 @@ export function ResourceTable({
   return (
     <RenderEnvContext.Provider value={renderEnv}>
       <Table<AnyRecord>
-        rowKey={(r) => String(recordId(resource.ref, r) ?? JSON.stringify(r))}
+        rowKey={rowKey}
+        rowSelection={
+          selection
+            ? {
+                selectedRowKeys: selection.keys,
+                onChange: (keys, selectedRows) =>
+                  selection.onChange(keys.map(String), selectedRows),
+                getCheckboxProps: (r) => ({
+                  disabled: selection.isSelectable ? !selection.isSelectable(r) : false,
+                }),
+                // Ticking a box must not also open the row.
+                renderCell: (_checked, _r, _i, node) => (
+                  <span onClick={(e) => e.stopPropagation()}>{node}</span>
+                ),
+              }
+            : undefined
+        }
         dataSource={rows}
         columns={tableColumns}
         loading={loading}

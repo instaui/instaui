@@ -1,6 +1,6 @@
 # instaui
 
-> **Status:** `0.0.13` is the current release of the new engine (introduced in `0.0.12`). It is pre-1.0, so the API may still change. 0.0.10 and earlier (`ItemCrud`) are deprecated.
+> **Status:** `0.0.14` is the current release of the new engine (introduced in `0.0.12`). It is pre-1.0, so the API may still change. 0.0.10 and earlier (`ItemCrud`) are deprecated.
 
 **Config-first CRUD for antd.** Define a resource once, in TypeScript or as JSON served by your backend, and get the list, filters, forms, detail view, actions and permissions from that one definition.
 

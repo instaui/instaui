@@ -83,6 +83,43 @@ export const EditTask = ({ id, onDone }: { id: number; onDone(): void }) => (
 
 `unstable_*` exports may change in minor releases.
 
+### A resource inside another view
+
+`<ResourceCrud embedded>` is the whole list-detail-form for one resource inside another screen, such as a parent's detail. Its list state and open record stay in component state, so the page URL is untouched.
+
+| Prop       | Purpose                                                                                            |
+| ---------- | -------------------------------------------------------------------------------------------------- |
+| `ctx`      | Merged over the provider's context for this view: fills `{ctx.x}` in `api.path`, `$var` and access |
+| `filter`   | Always applied, AND-ed with the user's filters, and not shown in the filter bar                    |
+| `defaults` | Initial values for records created here                                                            |
+| `title`    | The heading; `false` hides it                                                                      |
+
+```tsx
+import { ResourceCrud, defineResource, type ViewProps } from 'instaui';
+
+// GET/POST/PATCH/DELETE teams/{teamId}/members[/{id}]
+export const members = defineResource({
+  name: 'members',
+  api: { path: 'teams/{ctx.teamId}/members' },
+  menu: false,
+  fields: [
+    { key: 'userId', type: 'relation', props: { resource: 'users' } },
+    { key: 'role', type: 'text' },
+  ],
+});
+
+/** A team's detail view with its members underneath. */
+export const TeamDetail = ({ record }: ViewProps) => (
+  <ResourceCrud
+    resource="members"
+    embedded
+    ctx={{ teamId: record?.id }}
+    defaults={{ role: 'member' }}
+    title="Members"
+  />
+);
+```
+
 ## 4. Headless
 
 `useResourceList`, `useResourceRecord`, `useResourceMutations`, `useRelationOptions`, `useResourceSubmit` and `useCan` give you data, saving and access with your own UI.

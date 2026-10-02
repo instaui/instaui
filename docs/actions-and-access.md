@@ -48,26 +48,86 @@ export const invoices = defineResource({
 
 Placements:
 
-| Placement | Where it shows                            |
-| --------- | ----------------------------------------- |
-| `row`     | The table's actions column                |
-| `detail`  | The detail view's footer                  |
-| `toolbar` | Above the table                           |
-| `bulk`    | Selected rows (coming in a later release) |
+| Placement | Where it shows                         |
+| --------- | -------------------------------------- |
+| `row`     | The table's actions column             |
+| `detail`  | The detail view's footer               |
+| `toolbar` | Above the table                        |
+| `bulk`    | Above the table, for the selected rows |
 
 Handlers receive a stable `ActionContext` with these members:
 
-| Member                | Purpose                                |
-| --------------------- | -------------------------------------- |
-| `record`              | The record the action was triggered on |
-| `dataProvider`, `ctx` | Data access and app context            |
-| `refresh()`           | Reload the resource's data             |
-| `navigate(to)`        | Go to another route                    |
-| `notify`              | Show success or error messages         |
-| `open(content)`       | Open a modal owned by instaui          |
-| `close()`             | Close that modal                       |
+| Member                | Purpose                                        |
+| --------------------- | ---------------------------------------------- |
+| `record`              | The record the action was triggered on         |
+| `selection`           | The selected rows (bulk actions)               |
+| `values`              | The action form's values, when it has a `form` |
+| `dataProvider`, `ctx` | Data access and app context                    |
+| `refresh()`           | Reload the resource's data                     |
+| `navigate(to)`        | Go to another route                            |
+| `notify`              | Show success or error messages                 |
+| `open(content)`       | Open a modal owned by instaui                  |
+| `close()`             | Close that modal                               |
 
 After a custom action succeeds, the resource's data is refreshed. Set `onSuccess: 'none'` to skip that.
+
+`confirm` takes `title`, `description`, `typeToConfirm`, `okText` (default: the action's label) and `danger` (default: the action's `danger`).
+
+### Bulk actions
+
+A custom action with `placement: ['bulk']` adds row checkboxes and a bar above the table. The action runs with the selected rows as `selection`. `list.selectable` limits which rows can be ticked; a selection is cleared when the list changes (page, filters, tab).
+
+### Action forms
+
+`form` collects inputs before the action runs: a reason, a date, a quantity. Its fields are ordinary [field definitions](resources-and-fields.md), with the same types, rules, `visibleIf` and widgets. Their values reach `run` as `values`, encoded like a create payload (dates as `YYYY-MM-DD`, empty values left out). A thrown `HttpError` with field errors puts them on the inputs and keeps the form open.
+
+```tsx
+import { defineResource } from 'instaui';
+
+export const devices = defineResource({
+  name: 'devices',
+  fields: [
+    { key: 'serial', type: 'text' },
+    {
+      key: 'state',
+      type: 'enum',
+      props: {
+        options: [
+          { value: 'IN_STOCK', label: 'In stock' },
+          { value: 'RETIRED', label: 'Retired' },
+        ],
+      },
+    },
+  ],
+  list: { selectable: { state: 'IN_STOCK' } },
+  actions: [
+    'detail',
+    {
+      id: 'retire',
+      label: 'Retire',
+      danger: true,
+      placement: ['bulk', 'row'],
+      visibleIf: { state: 'IN_STOCK' },
+      form: {
+        title: 'Retire devices',
+        fields: [
+          { key: 'reason', type: 'text', widget: 'textarea', required: true },
+          { key: 'from', type: 'date' },
+        ],
+      },
+      run: ({ record, selection, values, dataProvider, ctx }) =>
+        dataProvider.custom({
+          method: 'POST',
+          path: 'devices/retire',
+          ctx,
+          body: { serials: (selection ?? [record]).map((d) => d?.serial), ...values },
+        }),
+    },
+  ],
+});
+```
+
+An action can also show a result instead of a form: `open(content, { title, width })` puts any React content in a modal owned by instaui.
 
 ## Access
 

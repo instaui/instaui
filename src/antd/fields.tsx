@@ -325,6 +325,8 @@ export const builtinWidgets: Record<string, ComponentType<WidgetProps>> = {
       id={id}
       mode="tags"
       style={{ width: '100%' }}
+      // e.g. `props.tokenSeparators: [',', '\n']` turns a pasted column into separate values
+      tokenSeparators={field.props.tokenSeparators as string[] | undefined}
       value={(value as string[]) ?? []}
       disabled={disabled}
       placeholder={field.placeholder}

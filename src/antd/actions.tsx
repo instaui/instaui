@@ -105,6 +105,8 @@ export interface ConfirmState {
   title: string;
   description?: string;
   typeToConfirm?: string;
+  okText: string;
+  danger: boolean;
   run(): Promise<unknown>;
 }
 
@@ -125,8 +127,8 @@ export function ConfirmDialog({
     <Modal
       open={state !== undefined}
       title={state?.title}
-      okText={messages.delete}
-      okButtonProps={{ danger: true, disabled: needsWord ? typed !== needsWord : false }}
+      okText={state?.okText}
+      okButtonProps={{ danger: state?.danger, disabled: needsWord ? typed !== needsWord : false }}
       confirmLoading={busy}
       cancelText={messages.cancel}
       destroyOnHidden

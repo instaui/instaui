@@ -141,7 +141,24 @@ export interface BuiltinActionConfig {
 }
 
 export type ActionConfirm =
-  boolean | { title?: string; description?: string; typeToConfirm?: string };
+  | boolean
+  | {
+      title?: string;
+      description?: string;
+      typeToConfirm?: string;
+      /** Confirm button text (default: the action's label; "Delete" for delete). */
+      okText?: string;
+      /** Red confirm button (default: the action's `danger`; true for delete). */
+      danger?: boolean;
+    };
+
+/** A confirmation shown before a form is saved (`form.confirm`). */
+export interface SubmitConfirm {
+  title: string;
+  description?: string;
+  okText?: string;
+  danger?: boolean;
+}
 
 /** Stable object passed to action handlers: no stale closures over app state. */
 export interface ActionContext<T = AnyRecord> {
@@ -156,6 +173,19 @@ export interface ActionContext<T = AnyRecord> {
   /** Opens content (a React node) in a modal owned by instaui. */
   open(content: unknown, options?: { title?: string; width?: number | string }): void;
   close(): void;
+  /** The action form's values, encoded like a create payload (when the action has a `form`). */
+  values?: AnyRecord;
+}
+
+/** Inputs an action collects before it runs, e.g. a reason or a date. */
+export interface ActionForm<T = AnyRecord> {
+  fields: FieldDefinition[];
+  title?: string;
+  /** Submit button text (default: the action's label). */
+  submitLabel?: string;
+  width?: number | string;
+  /** Initial values, in wire format like a record. */
+  initialValues?: (context: { record?: T; selection?: T[] }) => AnyRecord;
 }
 
 export interface ActionDefinition<T = AnyRecord> {
@@ -168,6 +198,8 @@ export interface ActionDefinition<T = AnyRecord> {
   visibleIf?: Condition<T>;
   disabledIf?: Condition<T>;
   confirm?: ActionConfirm;
+  /** Collect these inputs first; `run` receives them as `values`. Replaces `confirm`. */
+  form?: ActionForm<T>;
   run: (context: ActionContext<T>) => unknown | Promise<unknown>;
   onSuccess?: 'refetch' | 'close' | 'none';
 }
@@ -214,6 +246,8 @@ export interface ResourceDefinition<T extends object = AnyRecord> {
     tabs?: ListTab[];
     /** Active-filter chips with clear buttons; `savedViews` stores named filter sets per browser. */
     filterBar?: boolean | { savedViews?: boolean };
+    /** Rows that bulk actions may select (default: all). */
+    selectable?: Condition<T>;
   };
   form?: {
     container?: ContainerOptions;
@@ -232,6 +266,11 @@ export interface ResourceDefinition<T extends object = AnyRecord> {
       payload: AnyRecord,
       info: SubmitInfo,
     ) => FieldErrors | string | undefined | Promise<FieldErrors | string | undefined>;
+    /**
+     * Ask before saving, e.g. when a change has consequences. Receives the form values; return a
+     * confirmation to show, or nothing to save straight away.
+     */
+    confirm?: (values: T, info: SubmitInfo) => SubmitConfirm | undefined | false;
   };
   detail?: { container?: ContainerOptions };
   actions?: ResourceAction<T>[];
@@ -273,6 +312,7 @@ export interface NormalizedResource<T extends object = AnyRecord> extends Resour
     search: boolean;
     tabs: ListTab[];
     filterBar?: { savedViews?: boolean };
+    selectable?: Condition<T>;
   };
   patch: 'diff' | 'full';
   actions: ResourceAction<T>[];
@@ -336,6 +376,7 @@ export function normalizeResource<T extends object>(
         definition.list?.filterBar === true
           ? { savedViews: false }
           : definition.list?.filterBar || undefined,
+      selectable: definition.list?.selectable,
     },
     patch: definition.form?.patch ?? (definition.form?.beforeSubmit ? 'full' : 'diff'),
     actions: definition.actions ?? DEFAULT_ACTIONS,

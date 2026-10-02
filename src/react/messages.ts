@@ -41,6 +41,8 @@ export const defaultMessages = {
   saveView: 'Save view',
   viewName: 'View name',
   deleteView: (name: string) => `Delete view ${name}`,
+  selected: (count: number) => (count === 0 ? 'Select rows for bulk actions' : `${count} selected`),
+  clearSelection: 'Clear selection',
 };
 
 export type Messages = typeof defaultMessages;
