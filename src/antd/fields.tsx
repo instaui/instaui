@@ -49,6 +49,8 @@ export interface DisplayProps {
   record: AnyRecord;
   field: NormalizedField;
   resource: NormalizedResource;
+  /** Where the value is shown: a list cell or the detail view. */
+  context?: 'list' | 'detail';
 }
 
 function TextDisplay({ value, field }: DisplayProps) {

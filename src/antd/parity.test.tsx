@@ -192,3 +192,31 @@ describe('rows and access', () => {
     await waitFor(() => expect(router.current().pathname).toBe('/orders/view/1'));
   });
 });
+
+describe('display context', () => {
+  test('a display knows whether it renders a list cell or the detail view', async () => {
+    const notes = defineResource({
+      name: 'notes',
+      fields: [
+        {
+          key: 'title',
+          type: 'text',
+          display: ({ value, context }: { value: unknown; context?: string }) => (
+            <span>{`${context}:${String(value)}`}</span>
+          ),
+        },
+      ],
+    });
+    render(
+      <InstaProvider
+        dataProvider={createMemoryProvider({ notes: [{ id: 1, title: 'Hi' }] })}
+        resources={[notes]}
+        router={memoryAdapter('/notes/1')}
+      >
+        <ResourceCrud resource="notes" />
+      </InstaProvider>,
+    );
+    expect(await screen.findByText('list:Hi')).toBeTruthy();
+    expect(await screen.findByText('detail:Hi')).toBeTruthy();
+  });
+});

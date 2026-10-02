@@ -39,6 +39,7 @@ export function ResourceDetail({
               record={record}
               field={field}
               resource={resource}
+              context="detail"
             />
           ),
         }))}

@@ -105,6 +105,7 @@ export function ResourceTable({
             record={record}
             field={field}
             resource={resource}
+            context="list"
           />
         ),
       };
