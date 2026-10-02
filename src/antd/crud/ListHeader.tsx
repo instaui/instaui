@@ -1,5 +1,5 @@
 import { Flex, Input, Segmented, Typography } from 'antd';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { ListState } from '../../core/list-state.ts';
 import type { NormalizedResource } from '../../core/resource.ts';
 import { useInsta } from '../../react/context.tsx';
@@ -33,13 +33,10 @@ export function ListHeader({
         )}
         <Flex gap={8} align="center" wrap>
           {resource.list.search ? (
-            <Input.Search
-              aria-label={messages.search}
-              placeholder={messages.search}
-              allowClear
-              defaultValue={list.search}
+            <SearchBox
+              label={messages.search}
+              value={list.search}
               onSearch={(q) => onListChange({ ...list, page: 1, search: q || undefined })}
-              style={{ width: 240 }}
             />
           ) : null}
           {toolbar}
@@ -64,5 +61,34 @@ export function ListHeader({
         />
       ) : null}
     </>
+  );
+}
+
+/** The text being typed, reset whenever the applied search changes elsewhere (chips, URL, views). */
+function SearchBox({
+  label,
+  value,
+  onSearch,
+}: {
+  label: string;
+  value: string | undefined;
+  onSearch(q: string): void;
+}) {
+  const [draft, setDraft] = useState(value ?? '');
+  const [applied, setApplied] = useState(value);
+  if (applied !== value) {
+    setApplied(value);
+    setDraft(value ?? '');
+  }
+  return (
+    <Input.Search
+      aria-label={label}
+      placeholder={label}
+      allowClear
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onSearch={onSearch}
+      style={{ width: 240 }}
+    />
   );
 }

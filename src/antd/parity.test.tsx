@@ -64,11 +64,11 @@ const seed = () => ({
   ],
 });
 
-function setup(path = '/orders') {
+function setup(path = '/orders', resource = orders) {
   const router = memoryAdapter(path);
   const dataProvider = createMemoryProvider(seed());
   render(
-    <InstaProvider dataProvider={dataProvider} resources={[orders]} router={router}>
+    <InstaProvider dataProvider={dataProvider} resources={[resource]} router={router}>
       <ResourceCrud resource="orders" />
     </InstaProvider>,
   );
@@ -157,6 +157,18 @@ describe('filter bar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear all' }));
     await waitFor(() => expect(router.current().search).toBe(''));
     expect(screen.getByText('No filters applied')).toBeTruthy();
+  });
+
+  test('the search box follows the search when it is cleared elsewhere', async () => {
+    const { router } = setup('/orders', { ...orders, list: { ...orders.list, search: true } });
+    const box = await screen.findByRole('searchbox', { name: 'Search' });
+    fireEvent.change(box, { target: { value: 'A-2' } });
+    fireEvent.keyDown(box, { key: 'Enter' });
+    await waitFor(() => expect(router.current().search).toBe('?q=A-2'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear all' }));
+    await waitFor(() => expect(router.current().search).toBe(''));
+    expect(box).toHaveProperty('value', '');
   });
 });
 

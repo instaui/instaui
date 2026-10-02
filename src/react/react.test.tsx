@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest';
 import { createMemoryProvider } from '../core/memory-provider.ts';
 import { defineResource } from '../core/resource.ts';
 import { isAllowed, useCan } from './access.ts';
-import { InstaProvider, useResource } from './context.tsx';
+import { InstaProvider, useResource, useScopedConfig } from './context.tsx';
 import { useRecordsByIds, useRelationOptions, useResourceList, useResourceRecord } from './data.ts';
 import { createRouterAdapter, memoryAdapter } from './router.ts';
 import { buildPath, matchView, useResourceRouting } from './routes.ts';
@@ -164,6 +164,33 @@ describe('data hooks', () => {
     await waitFor(() =>
       expect(result.current.byId.data?.get('2')).toEqual({ id: 2, name: 'Edge' }),
     );
+  });
+});
+
+describe('useScopedConfig', () => {
+  test('keeps ctx values as given and the same config while they are equal', () => {
+    // The provider's own config only stays the same while its props do.
+    const resources = [projects, teams];
+    const dataProvider = createMemoryProvider(seed());
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <InstaProvider dataProvider={dataProvider} resources={resources}>
+        {children}
+      </InstaProvider>
+    );
+    const since = new Date('2026-01-01');
+    const format = (n: number) => `#${n}`;
+    const { result, rerender } = renderHook(({ id }) => useScopedConfig({ id, since, format }), {
+      wrapper,
+      initialProps: { id: 1 },
+    });
+    const first = result.current;
+    expect(first.ctx.since).toBe(since);
+    expect(first.ctx.format).toBe(format);
+    rerender({ id: 1 });
+    expect(result.current).toBe(first);
+    rerender({ id: 2 });
+    expect(result.current.ctx.id).toBe(2);
+    expect(result.current).not.toBe(first);
   });
 });
 

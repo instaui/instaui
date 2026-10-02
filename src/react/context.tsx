@@ -189,19 +189,28 @@ export function InstaConfigOverride({
 
 /**
  * The provider's config with `extra` merged into its context, and optionally another router.
- * Keyed by value, so an inline `ctx={{ id }}` keeps query keys stable between renders.
+ * Compared by value, so an inline `ctx={{ id }}` keeps query keys stable between renders; the
+ * values themselves (dates, functions) are passed through untouched.
  */
 export function useScopedConfig(extra?: InstaContext, router?: RouterAdapter): InstaConfig {
   const config = useInsta();
-  const key = extra ? JSON.stringify(extra) : '';
+  const scoped = useByValue(extra);
   return useMemo(
     () => ({
       ...config,
-      ctx: key ? { ...config.ctx, ...(JSON.parse(key) as InstaContext) } : config.ctx,
+      ctx: scoped ? { ...config.ctx, ...scoped } : config.ctx,
       router: router ?? config.router,
     }),
-    [config, key, router],
+    [config, scoped, router],
   );
+}
+
+/** `value`, but the same object as last render while its JSON is unchanged. */
+function useByValue<T>(value: T): T {
+  const key = value === undefined ? '' : JSON.stringify(value);
+  const [kept, setKept] = useState({ key, value });
+  if (kept.key !== key) setKept({ key, value });
+  return kept.key === key ? kept.value : value;
 }
 
 /** The `apiClient` given to `<InstaApp>` / `<InstaProvider>`, for custom views' own requests. */
