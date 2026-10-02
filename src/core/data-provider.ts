@@ -32,7 +32,8 @@ export interface ResourceRef {
   paramRanges?: Readonly<Record<string, readonly [string, string]>>;
 }
 
-interface BaseParams {
+/** What every data provider call receives: the resource, the context and an abort signal. */
+export interface BaseParams {
   resource: ResourceRef;
   ctx: InstaContext;
   signal?: AbortSignal;

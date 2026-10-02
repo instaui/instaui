@@ -224,6 +224,20 @@ describe('access', () => {
 });
 
 describe('useResourceSubmit', () => {
+  test('is the same function between renders', () => {
+    const resources = [projects, teams];
+    const dataProvider = createMemoryProvider(seed());
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <InstaProvider dataProvider={dataProvider} resources={resources}>
+        {children}
+      </InstaProvider>
+    );
+    const { result, rerender } = renderHook(() => useResourceSubmit('projects'), { wrapper });
+    const first = result.current;
+    rerender();
+    expect(result.current).toBe(first);
+  });
+
   test('validates form values, then sends only the diff and refreshes', async () => {
     const { wrapper, dataProvider } = setup();
     const { result } = renderHook(() => useResourceSubmit('projects'), { wrapper });

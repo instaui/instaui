@@ -6,6 +6,7 @@ export type { CodecContext, CodecEnv, FieldCodec, Timezone } from './core/codecs
 export { withListFallbacks } from './core/lookup.ts';
 export type {
   AnyRecord,
+  BaseParams,
   CustomParams,
   DataProvider,
   HttpMethod,
@@ -59,6 +60,8 @@ export type {
   ActionDefinition,
   ActionForm,
   ActionPlacement,
+  ActionTarget,
+  ActionText,
   BuiltinAction,
   BuiltinActionConfig,
   OpenResourceOptions,
@@ -127,6 +130,7 @@ export { RelationSelect } from './antd/RelationSelect.tsx';
 export type { RelationSelectProps } from './antd/RelationSelect.tsx';
 export { ResourceCrud } from './antd/ResourceCrud.tsx';
 export type { ResourceCrudProps, ViewProps } from './antd/ResourceCrud.tsx';
+export type { Notify } from './antd/notify.tsx';
 export { ResourceTable } from './antd/ResourceTable.tsx';
 export type { ResourceTableProps } from './antd/ResourceTable.tsx';
 export { useResourceTable } from './antd/useResourceTable.tsx';
