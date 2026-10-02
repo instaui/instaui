@@ -257,3 +257,68 @@ describe('config validation in InstaProvider', () => {
     ).toThrow(/Invalid instaui config/);
   });
 });
+
+describe('submit options for migrating apps', () => {
+  const make = (form: Parameters<typeof defineResource>[0]['form']) =>
+    defineResource({
+      name: 'notes',
+      fields: [
+        { key: 'title', type: 'text' },
+        { key: 'body', type: 'text' },
+      ],
+      form,
+    });
+  const renderSubmit = (resource: ReturnType<typeof make>) => {
+    const dataProvider = createMemoryProvider({ notes: [{ id: 1, title: 'A' }] });
+    const update = vi.spyOn(dataProvider, 'update');
+    const { result } = renderHook(() => useResourceSubmit('notes'), {
+      wrapper: ({ children }) => (
+        <InstaProvider dataProvider={dataProvider} resources={[resource]}>
+          {children}
+        </InstaProvider>
+      ),
+    });
+    return { submit: result, update };
+  };
+
+  test("emptyValue: 'omit' sends nothing for empty values instead of null", async () => {
+    const { submit, update } = renderSubmit(make({ patch: 'full', emptyValue: 'omit' }));
+    await submit.current({
+      mode: 'edit',
+      id: 1,
+      original: { id: 1, title: 'A' },
+      values: { title: 'B', body: undefined },
+    });
+    expect(update.mock.calls[0]![0].data).toEqual({ title: 'B' });
+  });
+
+  test('validatePayload sees the final payload; field, form-level and thrown errors all stop the save', async () => {
+    const seen: unknown[] = [];
+    const validatePayload = vi.fn((payload: Record<string, unknown>) => {
+      seen.push(payload);
+      if (payload.title === 'field') return { title: 'Bad title' };
+      if (payload.title === 'form') return 'Not allowed';
+      if (payload.title === 'throw') throw new Error('Broken');
+      return undefined;
+    });
+    const { submit, update } = renderSubmit(
+      make({ patch: 'full', beforeSubmit: (p) => ({ ...p, extra: true }), validatePayload }),
+    );
+    const original = { id: 1, title: 'A' };
+    const run = (title: string) =>
+      submit.current({ mode: 'edit', id: 1, original, values: { title } });
+    await expect(run('field')).resolves.toMatchObject({
+      ok: false,
+      fieldErrors: { title: 'Bad title' },
+    });
+    await expect(run('form')).resolves.toMatchObject({
+      ok: false,
+      fieldErrors: { _form: 'Not allowed' },
+      message: 'Not allowed',
+    });
+    await expect(run('throw')).resolves.toMatchObject({ ok: false, message: 'Broken' });
+    expect(update).not.toHaveBeenCalled();
+    await expect(run('ok')).resolves.toMatchObject({ ok: true });
+    expect(seen.at(-1)).toEqual({ title: 'ok', body: null, extra: true });
+  });
+});

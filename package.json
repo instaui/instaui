@@ -1,6 +1,6 @@
 {
   "name": "instaui",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "Config-first CRUD for antd: define resources in TypeScript or JSON, get list, filters, forms, detail, actions and permissions.",
   "keywords": [
     "antd",

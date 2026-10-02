@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. This project follows [Semantic Versioning](https://semver.org/).
 Note: versions `1.0.2` and `1.0.3` can never be published (npm reserved them from an unrelated 2016 package), so the release after `1.0.1` is `1.1.0`.
 
+## 0.0.13
+
+- `form.emptyValue: 'omit'`: updates leave empty values out instead of sending `null`.
+- `form.validatePayload(payload)`: validates the final payload (after encoding and `beforeSubmit`) for rules written against the API's shape. Returns field messages, a form-level message, or nothing. A thrown error stops the save and is shown.
+
 ## 0.0.12
 
 The new engine, published on the 0.0.x line. (0.0.11 was lost to an npm registry publishing error and is never available.) The API is not stable yet and may change before 1.0.

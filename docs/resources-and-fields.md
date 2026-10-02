@@ -123,4 +123,6 @@ export const tickets = defineResource({
 - **Updates send only changed fields.** Set `form.patch: 'full'` to send everything.
 - **A cleared value is sent as `null`.**
 - **Validation order:** field rules (`required`, `validate`) run first, then `form.validate(values)`, which can return `{ field: message }` or `{ _form: message }`, and finally the server. Server errors with `fieldErrors` are shown on the matching fields.
+- **`form.emptyValue: 'omit'`** makes updates leave empty values out instead of sending `null`.
+- **`form.validatePayload(payload)`** validates the final payload, after encoding and `beforeSubmit`, for rules written against the API's shape. It returns field messages, a form-level message, or nothing.
 - **`form.beforeSubmit(payload)`** is an escape hatch for reshaping the payload. Prefer field types and codecs. Using it switches the default to full updates.

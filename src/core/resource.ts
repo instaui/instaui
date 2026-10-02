@@ -215,6 +215,16 @@ export interface ResourceDefinition<T extends object = AnyRecord> {
     /** Escape hatch run after encoding; prefer field codecs. Defaults `patch` to `'full'`. */
     beforeSubmit?: (payload: AnyRecord, info: { mode: FormMode; ctx: InstaContext }) => AnyRecord;
     patch?: 'diff' | 'full';
+    /** What an update sends for an empty value: `'null'` (default: clears it) or `'omit'` (sends nothing). */
+    emptyValue?: 'null' | 'omit';
+    /**
+     * Validates the final payload (after encoding and `beforeSubmit`), for rules written against the
+     * API shape. Return field messages, a form-level message, or nothing. A thrown error is shown too.
+     */
+    validatePayload?: (
+      payload: AnyRecord,
+      info: { mode: FormMode; ctx: InstaContext },
+    ) => FieldErrors | string | undefined | Promise<FieldErrors | string | undefined>;
   };
   detail?: { container?: ContainerOptions };
   actions?: ResourceAction<T>[];

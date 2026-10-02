@@ -74,7 +74,7 @@ export function buildSubmitPayload<T extends object>({
       if (same(before, encoded)) continue;
     }
     if (encoded === undefined) {
-      if (mode === 'create') continue;
+      if (mode === 'create' || resource.form?.emptyValue === 'omit') continue;
       payload = setPath(payload, field.key, null);
     } else {
       payload = setPath(payload, field.key, encoded);

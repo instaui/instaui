@@ -58,6 +58,26 @@ export function useResourceSubmit(resourceName: string) {
         throw error;
       }
 
+      if (resource.form?.validatePayload) {
+        let result: FieldErrors | string | undefined;
+        try {
+          result = await resource.form.validatePayload(payload, { mode, ctx });
+        } catch (error) {
+          result = errorMessage(error, messages.formInvalid);
+        }
+        if (typeof result === 'string' && result) {
+          return { ok: false, fieldErrors: { _form: result }, message: result };
+        }
+        if (typeof result === 'object' && hasErrors(result)) {
+          const formLevel = result._form;
+          return {
+            ok: false,
+            fieldErrors: result,
+            message: formLevel === undefined ? messages.formInvalid : [formLevel].flat().join(' '),
+          };
+        }
+      }
+
       try {
         if (mode === 'create') {
           const res = await create.mutateAsync(payload);
