@@ -2,6 +2,7 @@
 
 instaui is config-first CRUD for antd. You describe each **resource** once and get its list, filters, forms, detail view, actions and access rules.
 
+- [A frontend for your REST API](for-backend-developers.md): start here if you are new to React
 - [Getting started](getting-started.md)
 - [Resources and fields](resources-and-fields.md)
 - [Conditions and filters (`Where`)](where.md)

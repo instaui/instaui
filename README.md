@@ -52,6 +52,8 @@ export const App = () => (
 - **Using an existing axios-style client:** `fromApiClient(apiClient, { encodeList, decodeList })`. [Fitting an existing API](docs/data-providers.md#fitting-an-existing-api) covers other parameter names, single-column search and missing routes.
 - **Tests and demos:** `createMemoryProvider(seed)`.
 
+New to React? [A frontend for your REST API](docs/for-backend-developers.md) walks a backend developer from an empty folder to a working admin.
+
 Read the [documentation](docs/README.md) for resources, fields, `Where`, data providers, routing, actions, access and escape hatches.
 
 ## What 1.0 will be
