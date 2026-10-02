@@ -5,7 +5,9 @@
  * Default format: `?page=2&pageSize=20&sort=-createdAt,name&f.status=ACTIVE&f.amount.gte=10&q=text`
  */
 import type { SortSpec } from './data-provider.ts';
+import type { NormalizedResource } from './resource.ts';
 import {
+  andWhere,
   fromConditions,
   OPERATORS,
   conditionsToParams,
@@ -223,3 +225,32 @@ export function paramUrlCodec({
 
 /** The browser URL is the API query (REST provider defaults). */
 export const passthroughUrlCodec: UrlCodec = paramUrlCodec();
+
+/** The active tab: the one named by `key`, else the first. */
+export function activeTab<T extends { key: string }>(
+  tabs: readonly T[],
+  key: string | undefined,
+): T | undefined {
+  return tabs.find((t) => t.key === key) ?? tabs[0];
+}
+
+/** The list a resource opens with, and what its URL leaves out: page size, sort, tabs, param names. */
+export function listDefaultsOf(resource: NormalizedResource): ListDefaults {
+  return {
+    pageSize: resource.list.pageSize,
+    sort: resource.list.sort,
+    fieldTypes: Object.fromEntries(resource.fields.map((f) => [f.key, f.type])),
+    fieldParams: { ...resource.ref.params },
+    fieldParamRanges: { ...resource.ref.paramRanges },
+    defaultTab: resource.list.tabs[0]?.key,
+  };
+}
+
+/** Everything the resource's list fetches: its own filter, the active tab's, and the user's. */
+export function listFilterOf(resource: NormalizedResource, state: ListState): Where {
+  return andWhere(
+    resource.list.filter,
+    activeTab(resource.list.tabs, state.tab)?.filter,
+    state.filter,
+  );
+}

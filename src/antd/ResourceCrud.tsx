@@ -12,9 +12,9 @@ import { recordId, type AnyRecord, type InstaContext } from '../core/data-provid
 import { errorMessage } from '../core/http-error.ts';
 import { resourceKeys } from '../core/query-keys.ts';
 import { conditionMet, type NormalizedResource } from '../core/resource.ts';
-import type { Where } from '../core/where.ts';
+import { andWhere, type Where } from '../core/where.ts';
 import { InstaConfigOverride, useInsta, useResource, useScopedConfig } from '../react/context.tsx';
-import { andWhere, useResourceList, useResourceRecord } from '../react/data.ts';
+import { useResourceList, useResourceRecord } from '../react/data.ts';
 import { memoryAdapter } from '../react/router.ts';
 import {
   defaultBasePathOf,

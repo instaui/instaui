@@ -19,30 +19,14 @@ import type {
   ResourceRef,
 } from '../core/data-provider.ts';
 import { recordId } from '../core/data-provider.ts';
-import type { ListState } from '../core/list-state.ts';
+import { listFilterOf, type ListState } from '../core/list-state.ts';
 import { resourceKeys } from '../core/query-keys.ts';
 import { getRecordsByIds } from '../core/lookup.ts';
 import { getPath } from '../core/path.ts';
 import type { NormalizedField } from '../core/resource.ts';
-import type { Where } from '../core/where.ts';
+import { andWhere, type Where } from '../core/where.ts';
 import { useInsta, useResource } from './context.tsx';
 import { valuesOf } from '../core/value.ts';
-
-const isEmptyWhere = (w: Where | undefined) => !w || Object.keys(w).length === 0;
-
-/** AND-combines non-empty filters. */
-export function andWhere(...filters: (Where | undefined)[]): Where {
-  const present = filters.filter((f): f is Where => !isEmptyWhere(f));
-  return present.length === 0 ? {} : present.length === 1 ? present[0]! : { $and: present };
-}
-
-/** The active tab: the one named by `key`, else the first. */
-export function activeTab<T extends { key: string }>(
-  tabs: readonly T[],
-  key: string | undefined,
-): T | undefined {
-  return tabs.find((t) => t.key === key) ?? tabs[0];
-}
 
 export function useResourceList(
   resourceName: string,
@@ -54,11 +38,7 @@ export function useResourceList(
   const params = {
     pagination: { mode: 'offset' as const, page: state.page, pageSize: state.pageSize },
     sort: state.sort,
-    filter: andWhere(
-      resource.list.filter,
-      activeTab(resource.list.tabs, state.tab)?.filter,
-      state.filter,
-    ),
+    filter: listFilterOf(resource, state),
     ...(state.search ? { search: state.search } : {}),
   };
   return useQuery({

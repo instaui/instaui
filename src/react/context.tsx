@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientContext, QueryClientProvider } from '@tanstack/react-query';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { setupDayjs, type CodecEnv, type FieldCodec, type Timezone } from '../core/codecs.ts';
-import type { AnyRecord, DataProvider, InstaContext } from '../core/data-provider.ts';
+import type { DataProvider, InstaContext } from '../core/data-provider.ts';
 import { isHttpError } from '../core/http-error.ts';
 import type { UrlCodec } from '../core/list-state.ts';
 import { defaultUrlCodec } from '../core/list-state.ts';
@@ -14,14 +14,7 @@ import { defaultMessages, type Messages } from './messages.ts';
 import { memoryAdapter, type RouterAdapter } from './router.ts';
 import { validateConfig } from '../core/validate-config.ts';
 import { warn } from '../core/warn.ts';
-
-export type AccessAction = 'list' | 'detail' | 'create' | 'edit' | 'delete' | (string & {});
-
-export interface AccessCheck {
-  resource: string;
-  action: AccessAction;
-  record?: AnyRecord;
-}
+import type { AccessCheck } from '../core/access.ts';
 
 export interface InstaRegistry {
   /** Extra or overriding codecs, by field type. */

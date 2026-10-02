@@ -5,9 +5,9 @@
 import { useState } from 'react';
 import type { AnyRecord } from '../core/data-provider.ts';
 import type { ListState } from '../core/list-state.ts';
-import type { Where } from '../core/where.ts';
+import { andWhere, type Where } from '../core/where.ts';
 import { useResource } from '../react/context.tsx';
-import { andWhere, useResourceList } from '../react/data.ts';
+import { useResourceList } from '../react/data.ts';
 import { defaultBasePathOf, useResourceRouting } from '../react/routes.ts';
 import type { ResourceTableProps } from './ResourceTable.tsx';
 

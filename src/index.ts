@@ -90,13 +90,8 @@ export type {
 // ── react ────────────────────────────────────────────────────────────────────
 export { useCan } from './react/access.ts';
 export { InstaProvider, useApiClient, useInsta, useResource } from './react/context.tsx';
-export type {
-  AccessAction,
-  AccessCheck,
-  InstaConfig,
-  InstaProviderProps,
-  InstaRegistry,
-} from './react/context.tsx';
+export type { AccessAction, AccessCheck } from './core/access.ts';
+export type { InstaConfig, InstaProviderProps, InstaRegistry } from './react/context.tsx';
 export {
   useRelationOptions,
   useResourceList,

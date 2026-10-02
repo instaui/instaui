@@ -7,7 +7,7 @@
  * The list query string travels with every view, so the list behind a record keeps its state.
  */
 import { useCallback, useMemo } from 'react';
-import type { ListState } from '../core/list-state.ts';
+import { listDefaultsOf, type ListState } from '../core/list-state.ts';
 import { useInsta, useResource } from './context.tsx';
 
 /** Where a resource lives when nothing says otherwise: `/{name}`. */
@@ -98,17 +98,7 @@ export function useResourceRouting(
   const { router, urlCodec } = useInsta();
   const { location, navigate } = router.useRouter();
 
-  const defaults = useMemo(
-    () => ({
-      pageSize: resource.list.pageSize,
-      sort: resource.list.sort,
-      fieldTypes: Object.fromEntries(resource.fields.map((f) => [f.key, f.type])),
-      fieldParams: { ...resource.ref.params },
-      fieldParamRanges: { ...resource.ref.paramRanges },
-      defaultTab: resource.list.tabs[0]?.key,
-    }),
-    [resource],
-  );
+  const defaults = useMemo(() => listDefaultsOf(resource), [resource]);
   const list = useMemo(
     () => urlCodec.parse(location.search, defaults),
     [urlCodec, location.search, defaults],

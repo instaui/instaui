@@ -285,6 +285,14 @@ export function conditionsToParams(
 /** A multi-value param's text: `a,b,c`. Single values are returned as they are. */
 export const joinValues = (v: unknown) => (Array.isArray(v) ? v.map(String).join(',') : v);
 
+const isEmptyWhere = (w: Where | undefined) => !w || Object.keys(w).length === 0;
+
+/** AND-combines non-empty filters. */
+export function andWhere(...filters: (Where | undefined)[]): Where {
+  const present = filters.filter((f): f is Where => !isEmptyWhere(f));
+  return present.length === 0 ? {} : present.length === 1 ? present[0]! : { $and: present };
+}
+
 /** Builds a `Where` from flat conditions (the inverse of `toConditions`). */
 export function fromConditions(conditions: WhereCondition[]): Where {
   const where: Record<string, PredicateOps> = {};
