@@ -16,10 +16,11 @@ import {
   Typography,
 } from 'antd';
 import dayjs from 'dayjs';
-import { createContext, useContext, type ComponentType, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ComponentType, type ReactNode } from 'react';
 import { codecFor } from '../core/codecs.ts';
 import type { AnyRecord, Id } from '../core/data-provider.ts';
 import { recordLabel } from '../core/label.ts';
+import type { ListState } from '../core/list-state.ts';
 import type { FormMode, NormalizedField, NormalizedResource } from '../core/resource.ts';
 import { safeUrl } from '../core/safe-url.ts';
 import type { PredicateOps, Where } from '../core/where.ts';
@@ -27,6 +28,7 @@ import { useInsta } from '../react/context.tsx';
 import { makeLink } from '../react/router.ts';
 import { buildPath } from '../react/routes.ts';
 import { RelationSelect } from './RelationSelect.tsx';
+import { ResourceTable } from './ResourceTable.tsx';
 
 // ─── shared context ──────────────────────────────────────────────────────────
 
@@ -145,6 +147,30 @@ function RelationDisplay({ value, field }: DisplayProps) {
   );
 }
 
+/**
+ * Nested rows that come inside a record (an array of objects), shown as a table with the columns
+ * of the resource named by `props.resource`. Paged in the browser.
+ */
+function TableDisplay({ value, field }: DisplayProps) {
+  const { resources } = useInsta();
+  const { basePathOf } = useContext(RenderEnvContext);
+  const [list, setList] = useState<ListState>({ page: 1, pageSize: 10, sort: [], filter: {} });
+  const target = field.props.resource ? resources.get(field.props.resource) : undefined;
+  const rows = Array.isArray(value) ? (value as AnyRecord[]) : [];
+  if (!target) return <>{rows.length}</>;
+  const start = (list.page - 1) * list.pageSize;
+  return (
+    <ResourceTable
+      resource={target}
+      rows={rows.slice(start, start + list.pageSize)}
+      total={rows.length}
+      list={list}
+      onListChange={setList}
+      basePathOf={basePathOf}
+    />
+  );
+}
+
 export const builtinDisplays: Record<string, ComponentType<DisplayProps>> = {
   text: TextDisplay,
   link: LinkDisplay,
@@ -153,6 +179,7 @@ export const builtinDisplays: Record<string, ComponentType<DisplayProps>> = {
   json: JsonDisplay,
   copyable: CopyableDisplay,
   relation: RelationDisplay,
+  table: TableDisplay,
 };
 
 const defaultDisplayFor = (field: NormalizedField): string =>

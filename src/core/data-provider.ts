@@ -12,6 +12,13 @@ export interface ResourceApi {
   path?: string;
   /** Key holding the list in list responses, when the backend wraps it (`{ data: { users: [...] } }`). */
   listKey?: string;
+  /**
+   * How to find one record when there is no `GET {path}/{id}`: `'list'` pages through the list;
+   * `{ search: 'field' }` searches the list for the id in that field.
+   */
+  lookup?: 'list' | { search: string };
+  /** `'client'`: the list cannot search, so typed text filters its first rows in the browser. */
+  search?: 'client';
   [key: string]: unknown;
 }
 

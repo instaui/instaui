@@ -172,9 +172,22 @@ export interface ActionContext<T = AnyRecord> {
   notify: { success(message: string): void; error(message: string): void };
   /** Opens content (a React node) in a modal owned by instaui. */
   open(content: unknown, options?: { title?: string; width?: number | string }): void;
+  /** Opens another resource's list in that modal, e.g. a record's history: `openResource('history', { ctx: { id } })`. */
+  openResource(name: string, options?: OpenResourceOptions): void;
   close(): void;
   /** The action form's values, encoded like a create payload (when the action has a `form`). */
   values?: AnyRecord;
+}
+
+export interface OpenResourceOptions {
+  /** Merged over the provider's context (fills `{ctx.x}` in the resource's `api.path`). */
+  ctx?: InstaContext;
+  /** Always applied to the list. */
+  filter?: Where;
+  /** Initial values for records created there. */
+  defaults?: AnyRecord;
+  title?: string;
+  width?: number | string;
 }
 
 /** Inputs an action collects before it runs, e.g. a reason or a date. */
@@ -281,10 +294,13 @@ export interface ResourceDefinition<T extends object = AnyRecord> {
   [extension: `x-${string}`]: unknown;
 }
 
-/** Identity function that type-checks a definition. */
+/**
+ * Identity function that type-checks a definition. `NoInfer` keeps the record type from being
+ * inferred from where the result goes (e.g. inline in `resources={[…]}`), which would make it `never`.
+ */
 export function defineResource<T extends object = AnyRecord>(
   definition: ResourceDefinition<T>,
-): ResourceDefinition<T> {
+): ResourceDefinition<NoInfer<T>> {
   return definition;
 }
 

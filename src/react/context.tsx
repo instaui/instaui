@@ -47,6 +47,8 @@ export interface InstaProviderProps {
   validate?: 'report' | 'strict' | false;
   /** Used only when no `QueryClientProvider` is above. */
   queryClient?: QueryClient;
+  /** Your own HTTP client, made available to custom views through `useApiClient()`. */
+  apiClient?: unknown;
   children?: ReactNode;
 }
 
@@ -62,6 +64,7 @@ export interface InstaConfig {
   can?: (check: AccessCheck) => boolean;
   urlCodec: UrlCodec;
   env: CodecEnv;
+  apiClient?: unknown;
 }
 
 const InstaContextValue = createContext<InstaConfig | null>(null);
@@ -93,6 +96,7 @@ export function InstaProvider({
   defaults,
   validate = 'report',
   queryClient,
+  apiClient,
   children,
 }: InstaProviderProps) {
   setupDayjs();
@@ -143,6 +147,7 @@ export function InstaProvider({
       registry: registry ?? {},
       can,
       urlCodec,
+      apiClient,
       env: {
         timezone,
         messages: { yes: mergedMessages.yes, no: mergedMessages.no },
@@ -163,6 +168,7 @@ export function InstaProvider({
       can,
       urlCodec,
       timezone,
+      apiClient,
     ],
   );
 
@@ -179,6 +185,31 @@ export function InstaConfigOverride({
   children?: ReactNode;
 }) {
   return <InstaContextValue.Provider value={value}>{children}</InstaContextValue.Provider>;
+}
+
+/**
+ * The provider's config with `extra` merged into its context, and optionally another router.
+ * Keyed by value, so an inline `ctx={{ id }}` keeps query keys stable between renders.
+ */
+export function useScopedConfig(extra?: InstaContext, router?: RouterAdapter): InstaConfig {
+  const config = useInsta();
+  const key = extra ? JSON.stringify(extra) : '';
+  return useMemo(
+    () => ({
+      ...config,
+      ctx: key ? { ...config.ctx, ...(JSON.parse(key) as InstaContext) } : config.ctx,
+      router: router ?? config.router,
+    }),
+    [config, key, router],
+  );
+}
+
+/** The `apiClient` given to `<InstaApp>` / `<InstaProvider>`, for custom views' own requests. */
+export function useApiClient<T = unknown>(): T {
+  const { apiClient } = useInsta();
+  if (apiClient === undefined)
+    throw new Error('useApiClient: no apiClient was given to the provider');
+  return apiClient as T;
 }
 
 export function useInsta(): InstaConfig {

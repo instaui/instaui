@@ -12,6 +12,7 @@ test('public runtime exports', () => {
       "FilterControl",
       "HttpError",
       "InstaAdmin",
+      "InstaApp",
       "InstaProvider",
       "RelationSelect",
       "ResourceCrud",
@@ -61,6 +62,7 @@ test('public runtime exports', () => {
       "toConditions",
       "unstable_ResourceDetail",
       "unstable_ResourceForm",
+      "useApiClient",
       "useCan",
       "useInsta",
       "useRecordsByIds",
@@ -73,6 +75,7 @@ test('public runtime exports', () => {
       "useResourceSubmit",
       "useResourceTable",
       "validateConfig",
+      "withListFallbacks",
     ]
   `);
 });

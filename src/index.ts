@@ -4,6 +4,7 @@
 export { builtinCodecs, CodecError, setupDayjs } from './core/codecs.ts';
 export type { CodecContext, CodecEnv, FieldCodec, Timezone } from './core/codecs.ts';
 export { recordId } from './core/data-provider.ts';
+export { withListFallbacks } from './core/lookup.ts';
 export type {
   AnyRecord,
   CustomParams,
@@ -56,6 +57,7 @@ export type {
   ListTab,
   NormalizedField,
   NormalizedResource,
+  OpenResourceOptions,
   ResourceAction,
   ResourceDefinition,
   SubmitConfirm,
@@ -99,7 +101,13 @@ export type {
 
 // ── react ────────────────────────────────────────────────────────────────────
 export { isAllowed, useCan } from './react/access.ts';
-export { createInstaQueryClient, InstaProvider, useInsta, useResource } from './react/context.tsx';
+export {
+  createInstaQueryClient,
+  InstaProvider,
+  useApiClient,
+  useInsta,
+  useResource,
+} from './react/context.tsx';
 export type {
   AccessAction,
   AccessCheck,
@@ -137,6 +145,8 @@ export type { SubmitResult } from './react/submit.ts';
 export { builtinDisplays, builtinWidgets, FieldDisplay, FilterControl } from './antd/fields.tsx';
 export type { DisplayProps, FilterControlProps, WidgetProps } from './antd/fields.tsx';
 export { InstaAdmin } from './antd/InstaAdmin.tsx';
+export { InstaApp } from './antd/InstaApp.tsx';
+export type { InstaAppProps } from './antd/InstaApp.tsx';
 export type { InstaAdminProps } from './antd/InstaAdmin.tsx';
 export { RelationSelect } from './antd/RelationSelect.tsx';
 export type { RelationSelectProps } from './antd/RelationSelect.tsx';

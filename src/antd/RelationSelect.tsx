@@ -5,12 +5,12 @@
  */
 import { Select, Spin } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
-import type { AnyRecord, Id } from '../core/data-provider.ts';
+import type { AnyRecord, Id, InstaContext } from '../core/data-provider.ts';
 import { recordId } from '../core/data-provider.ts';
 import { recordLabel } from '../core/label.ts';
 import type { Where } from '../core/where.ts';
 import { debounce } from '../utils/debounce.ts';
-import { useInsta, useResource } from '../react/context.tsx';
+import { InstaConfigOverride, useInsta, useResource, useScopedConfig } from '../react/context.tsx';
 import { useRecordsByIds, useRelationOptions } from '../react/data.ts';
 
 export interface RelationSelectProps {
@@ -30,12 +30,25 @@ export interface RelationSelectProps {
   id?: string;
   status?: 'error' | 'warning';
   style?: React.CSSProperties;
+  /** Extra context for this picker's queries, e.g. `{ orderId }` for `orders/{ctx.orderId}/items`. */
+  ctx?: InstaContext;
 }
 
 const asIds = (v: RelationSelectProps['value']): Id[] =>
   v === undefined || v === null || v === '' ? [] : Array.isArray(v) ? v : [v];
 
-export function RelationSelect({
+/** With `ctx`, the picker's queries use that context too (fills `{ctx.x}` in the target's path). */
+export function RelationSelect({ ctx, ...props }: RelationSelectProps) {
+  const config = useScopedConfig(ctx);
+  if (!ctx) return <Picker {...props} />;
+  return (
+    <InstaConfigOverride value={config}>
+      <Picker {...props} />
+    </InstaConfigOverride>
+  );
+}
+
+function Picker({
   resource: name,
   value,
   onChange,
@@ -49,7 +62,7 @@ export function RelationSelect({
   id,
   status,
   style,
-}: RelationSelectProps) {
+}: Omit<RelationSelectProps, 'ctx'>) {
   const target = useResource(name);
   const { messages } = useInsta();
   const [open, setOpen] = useState(false);

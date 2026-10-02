@@ -26,7 +26,7 @@ import {
 } from '../core/resource.ts';
 import type { Where } from '../core/where.ts';
 import { useCan } from '../react/access.ts';
-import { InstaConfigOverride, useInsta, useResource } from '../react/context.tsx';
+import { InstaConfigOverride, useInsta, useResource, useScopedConfig } from '../react/context.tsx';
 import {
   andWhere,
   useResourceList,
@@ -95,16 +95,7 @@ export function ResourceCrud(props: ResourceCrudProps) {
   const { embedded, ctx: extraCtx } = props;
   const base = props.basePath ?? (props.basePathOf ?? defaultBasePathOf)(props.resource);
   const [localRouter] = useState(() => (embedded ? memoryAdapter(base) : undefined));
-  // Keyed by value, so an inline `ctx={{ id }}` does not change identity (and query keys) every render.
-  const ctxKey = extraCtx ? JSON.stringify(extraCtx) : '';
-  const ctx = useMemo(
-    () => (ctxKey ? { ...insta.ctx, ...(JSON.parse(ctxKey) as InstaContext) } : insta.ctx),
-    [insta.ctx, ctxKey],
-  );
-  const config = useMemo(
-    () => ({ ...insta, ctx, router: localRouter ?? insta.router }),
-    [insta, ctx, localRouter],
-  );
+  const config = useScopedConfig(extraCtx, localRouter);
   if (!localRouter && !extraCtx) return <ResourceCrudView {...props} navigate={outer.navigate} />;
   return (
     <InstaConfigOverride value={config}>
@@ -192,6 +183,21 @@ function ResourceCrudView({
     navigate,
     notify,
     open: (content, options) => setOpened({ content: content as ReactNode, ...options }),
+    openResource: (target, { ctx: extra, filter, defaults: initial, title: heading, width } = {}) =>
+      setOpened({
+        content: (
+          <ResourceCrud
+            resource={target}
+            embedded
+            title={false}
+            ctx={extra}
+            filter={filter}
+            defaults={initial}
+          />
+        ),
+        title: heading,
+        width: width ?? 800,
+      }),
     close: () => setOpened(undefined),
   });
 
@@ -277,6 +283,11 @@ function ResourceCrudView({
     return (
       <>
         {holder}
+        {title === false ? null : (
+          <Typography.Title level={4} style={{ marginTop: 0 }}>
+            {title ?? resource.label.other}
+          </Typography.Title>
+        )}
         {Page ? (
           createElement(Page, viewProps())
         ) : (

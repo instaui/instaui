@@ -22,6 +22,7 @@ import type {
 } from './data-provider.ts';
 import { HttpError, type FieldErrors } from './http-error.ts';
 import { getPath } from './path.ts';
+import { withListFallbacks } from './lookup.ts';
 import { renderTemplate } from './template.ts';
 import { toConditions } from './where.ts';
 
@@ -315,7 +316,7 @@ export function createRestProvider(options: RestProviderOptions = {}): DataProvi
       })) as R;
     },
   };
-  return provider;
+  return withListFallbacks(provider);
 }
 
 /** The client shape apps already have: axios-like methods returning the parsed body. */

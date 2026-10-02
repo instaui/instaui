@@ -51,7 +51,8 @@ function AdminShell({ basePath = '', title, paths, slots }: InstaAdminProps) {
     [resources],
   );
   const segment = trim(api.location.pathname.slice(root.length)).split('/')[0] ?? '';
-  const active = resources.has(segment) ? segment : undefined;
+  // Only menu entries are routable: lookup-only resources (`menu: false`) are not screens.
+  const active = menuResources.some((r) => r.name === segment) ? segment : undefined;
   const first = menuResources[0]?.name;
 
   useEffect(() => {
