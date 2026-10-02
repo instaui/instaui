@@ -2,14 +2,14 @@
  * The create/edit form. Keyed by resource + record + mode with initial values taken once at mount:
  * values can't leak between records, and a background refetch never overwrites what the user typed.
  */
-import { Alert, Button, Flex, Form, Modal } from 'antd';
+import { Form, Modal } from 'antd';
 import { useState } from 'react';
 import type { AnyRecord, Id } from '../core/data-provider.ts';
 import { setPath } from '../core/path.ts';
-import { decodeRecord } from '../core/payload.ts';
 import type { FormMode, NormalizedResource } from '../core/resource.ts';
 import { useInsta } from '../react/context.tsx';
 import { useResourceSubmit } from '../react/submit.ts';
+import { FormError, FormFooter, useFieldForm } from './form-parts.tsx';
 import { applyFieldErrors, FormFields, resetDependents } from './FormFields.tsx';
 import type { Notify } from './notify.tsx';
 
@@ -35,21 +35,13 @@ export function ResourceForm({
   onDone,
   onCancel,
 }: ResourceFormProps) {
-  const { env, ctx, registry, messages } = useInsta();
+  const { ctx, messages } = useInsta();
   const [modal, modalHolder] = Modal.useModal();
-  const codecs = registry.codecs;
-  const [form] = Form.useForm();
-  const [initialValues] = useState(() =>
-    decodeRecord(
-      resource,
-      mode === 'create' && defaults ? { ...fieldDefaults(resource), ...defaults } : record,
-      mode,
-      env,
-      codecs,
-    ),
+  const { form, initialValues, values } = useFieldForm(
+    resource,
+    mode === 'create' && defaults ? { ...fieldDefaults(resource), ...defaults } : record,
+    mode,
   );
-  const watched = Form.useWatch((all: AnyRecord) => all, form) as AnyRecord | undefined;
-  const values = watched ?? initialValues;
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string>();
   const submit = useResourceSubmit(resource.name);
@@ -92,9 +84,7 @@ export function ResourceForm({
       }}
     >
       {modalHolder}
-      {formError ? (
-        <Alert type="error" showIcon message={formError} style={{ marginBottom: 16 }} />
-      ) : null}
+      <FormError message={formError} />
       <FormFields
         fields={resource.fields}
         mode={mode}
@@ -102,12 +92,7 @@ export function ResourceForm({
         values={values}
         record={record}
       />
-      <Flex justify="end" gap={8}>
-        <Button onClick={onCancel}>{messages.cancel}</Button>
-        <Button type="primary" htmlType="submit" loading={saving}>
-          {messages.save}
-        </Button>
-      </Flex>
+      <FormFooter submitLabel={messages.save} busy={saving} onCancel={onCancel} />
     </Form>
   );
 }

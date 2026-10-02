@@ -3,14 +3,15 @@
  * widgets as resource forms. Values are encoded like a create payload and handed to `run`; a
  * thrown `HttpError` with field errors puts them on the matching inputs.
  */
-import { Alert, Button, Flex, Form, Input, Typography } from 'antd';
+import { Form, Typography } from 'antd';
 import { useMemo, useState } from 'react';
 import type { AnyRecord } from '../core/data-provider.ts';
 import { errorMessage, isHttpError } from '../core/http-error.ts';
-import { buildSubmitPayload, decodeRecord } from '../core/payload.ts';
+import { buildSubmitPayload } from '../core/payload.ts';
 import { normalizeResource } from '../core/resource.ts';
 import type { ActionForm as ActionFormConfig } from '../core/actions.ts';
 import { useInsta } from '../react/context.tsx';
+import { FormError, FormFooter, TypeToConfirmInput, useFieldForm } from './form-parts.tsx';
 import { applyFieldErrors, FormFields, resetDependents } from './FormFields.tsx';
 
 export interface ActionFormProps {
@@ -41,17 +42,13 @@ export function ActionForm({
   onSubmit,
   onCancel,
 }: ActionFormProps) {
-  const { env, ctx, registry, messages } = useInsta();
-  const codecs = registry.codecs;
+  const { env, ctx, registry } = useInsta();
   // A throwaway resource gives the fields the same normalisation and codecs as resource forms.
   const resource = useMemo(
     () => normalizeResource({ name: id, fields: config.fields, form: { emptyValue: 'omit' } }),
     [id, config.fields],
   );
-  const [form] = Form.useForm();
-  const [initialValues] = useState(() => decodeRecord(resource, initial, 'create', env, codecs));
-  const watched = Form.useWatch((all: AnyRecord) => all, form) as AnyRecord | undefined;
-  const values = watched ?? initialValues;
+  const { form, initialValues, values } = useFieldForm(resource, initial, 'create');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const [typed, setTyped] = useState('');
@@ -72,7 +69,7 @@ export function ActionForm({
             values: submitted,
             ctx,
             env,
-            codecs,
+            codecs: registry.codecs,
           });
           await onSubmit(payload);
         } catch (e) {
@@ -85,30 +82,20 @@ export function ActionForm({
       }}
     >
       {description ? <Typography.Paragraph>{description}</Typography.Paragraph> : null}
-      {error ? <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} /> : null}
+      <FormError message={error} />
       <FormFields fields={resource.fields} mode="create" form={form} values={values} />
       {typeToConfirm ? (
         <Form.Item>
-          <Input
-            aria-label={messages.typeToConfirm(typeToConfirm)}
-            placeholder={messages.typeToConfirm(typeToConfirm)}
-            value={typed}
-            onChange={(e) => setTyped(e.target.value)}
-          />
+          <TypeToConfirmInput word={typeToConfirm} value={typed} onChange={setTyped} />
         </Form.Item>
       ) : null}
-      <Flex justify="end" gap={8}>
-        <Button onClick={onCancel}>{messages.cancel}</Button>
-        <Button
-          type="primary"
-          htmlType="submit"
-          danger={danger}
-          loading={busy}
-          disabled={typeToConfirm ? typed !== typeToConfirm : false}
-        >
-          {submitLabel}
-        </Button>
-      </Flex>
+      <FormFooter
+        submitLabel={submitLabel}
+        busy={busy}
+        danger={danger}
+        disabled={typeToConfirm ? typed !== typeToConfirm : false}
+        onCancel={onCancel}
+      />
     </Form>
   );
 }

@@ -1,9 +1,10 @@
 /** Action buttons and the confirmation dialog. What actions exist and when they show is core/actions. */
 import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined } from '@ant-design/icons';
-import { Button, Input, Modal } from 'antd';
+import { Button, Modal } from 'antd';
 import { useState, type ReactNode } from 'react';
 import type { ActionDialogText, BuiltinAction, ResolvedAction } from '../core/actions.ts';
 import type { Messages } from '../react/messages.ts';
+import { TypeToConfirmInput } from './form-parts.tsx';
 
 const BUILTIN_ICON: Record<BuiltinAction, ReactNode> = {
   create: <PlusOutlined />,
@@ -56,13 +57,7 @@ export function ConfirmDialog({
     >
       {state?.description ? <p>{state.description}</p> : null}
       {needsWord ? (
-        <Input
-          autoFocus
-          aria-label={messages.typeToConfirm(needsWord)}
-          placeholder={messages.typeToConfirm(needsWord)}
-          value={typed}
-          onChange={(e) => setTyped(e.target.value)}
-        />
+        <TypeToConfirmInput autoFocus word={needsWord} value={typed} onChange={setTyped} />
       ) : null}
     </Modal>
   );
