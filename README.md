@@ -2,7 +2,7 @@
 
 > **Status:** `0.0.14`. Pre-1.0, so the API may still change. 0.0.10 and earlier (`ItemCrud`) are deprecated.
 
-**Turn a REST API into a complete admin app by describing its resources, without changing the API and without writing CRUD screens.**
+**Turn a REST API into a complete admin app by describing its resources as data: no CRUD screens to write, and no changes to the API.**
 
 ## The problem
 
@@ -62,15 +62,21 @@ export const App = () => (
 
 ## Why instaui
 
-- **It fits the API you already have.** Parameter names, envelopes, error formats, missing routes (no GET-one, no search) and nested paths are configured in the frontend. The API doesn't change.
-- **The description is data.** Conditions, access rules and filters are JSON ([`Where`](docs/where.md)); widgets, displays and custom screens are referenced by name. A definition can be checked with `validateConfig`, and it can be served by your backend.
-- **Built for the people who know the API.** Backend developers can ship an admin with config alone ([a guide for them](docs/for-backend-developers.md)).
-- **Custom where it matters, standard everywhere else.** You can replace one field's input or display, one view, or a whole screen with your own React component. The rest stays generated.
-- **Small and unopinionated about your stack.** antd 5.25+ or 6, React 18 or 19, your router or none, TanStack Query for caching, and no runtime dependencies of its own.
+Three things set instaui apart from other admin tools ([how it compares](docs/comparison.md)):
+
+1. **Describe resources, not screens.** You describe each resource once: its fields, actions and access rules. The menu, lists, filters, forms, detail views, relation pickers and action dialogs all follow from that description. Most other tools have you write or assemble each screen.
+2. **The description is data.** A resource is a plain object. Conditions, access rules and filters are JSON ([`Where`](docs/where.md)); widgets, displays and custom screens are referenced by name. TypeScript types and `validateConfig` check a definition before it ships, and your backend can serve it ([server-driven config](docs/server-driven-config.md)).
+3. **It fits the API you have.** instaui calls your API through your own HTTP client, so auth headers and interceptors keep working. Parameter names, envelopes and error formats are configured in one place, and fallbacks cover routes your API lacks (no GET-one, no search). The API doesn't change.
+
+And because of those three:
+
+- **The people who know the API can build the admin.** Backend developers can ship one with config alone ([a guide for them](docs/for-backend-developers.md)).
+- **You customise only where it matters.** Replace one field's input or display, one view, or a whole screen with your own React component; the rest stays generated.
+- **It stays small and fits your stack.** antd 5.25+ or 6, React 18 or 19, your router or none, TanStack Query for caching, and no runtime dependencies of its own.
 
 ## When it fits
 
-See [how instaui compares](docs/comparison.md) with react-admin, Refine, Retool, Appsmith, ToolJet, AdminJS and Forest Admin.
+See [how instaui compares](docs/comparison.md) with react-admin, Refine, Ant Design ProComponents, amis, API Platform Admin, Retool, Appsmith, ToolJet, AdminJS and Forest Admin.
 
 - **Good fit:** internal tools, admin panels, back-offices and support consoles over REST-style APIs.
 - **Not a fit:** customer-facing UIs with a bespoke design, or page builders. instaui renders standard REST resources well and leaves bespoke screens to you.

@@ -1,7 +1,7 @@
 {
   "name": "instaui",
   "version": "0.0.14",
-  "description": "Turn a REST API into a complete admin app by describing its resources: lists, filters, forms, detail views and actions for antd, without changing the API.",
+  "description": "Turn a REST API into a complete antd admin app by describing its resources as data: no CRUD screens to write, and no changes to the API.",
   "keywords": [
     "antd",
     "antd6",

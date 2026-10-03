@@ -18,15 +18,21 @@ There are good ways to build an admin today. They differ in what you write, wher
 
 ## What makes instaui different
 
-- **The description is data, not code.** A resource is a plain object. Conditions, access rules and filters are JSON (`Where`), and custom inputs and screens are referenced by name. So a backend can serve the admin's configuration and you can validate it before it ships ([Server-driven config](server-driven-config.md)). In react-admin, Refine and ProComponents, a screen is code you write; ProComponents' column and field lists are props inside that code. amis is data too, but it describes pages (components, layout, which endpoint each one calls), so every list, form and detail view is written out. instaui describes the resource once, and the menu, list, filters, forms, detail view and relation pickers follow from it. In the low-code builders, an app lives in the builder.
-- **Your API stays as it is.** instaui calls your API through your own HTTP client, with your auth headers and interceptors. Its conventions are configured in one place: parameter names, envelopes, error formats, and even missing routes (no GET-one, no search). react-admin and Refine do this with data providers too; instaui adds the fallbacks for routes your API lacks. AdminJS and Forest Admin need your database or ORM rather than your API, so they bypass the API's business rules unless you rebuild them.
+Three things, most important first:
+
+1. **Describe resources, not screens.** You describe each resource once, and the menu, lists, filters, forms, detail views, relation pickers and action dialogs follow from it. In react-admin, Refine and ProComponents, a screen is code you write; ProComponents' column and field lists are props inside that code. amis is data, but it describes pages (components, layout, the endpoint each one calls), so every list, form and detail view is written out. In the visual builders, each screen is assembled by hand.
+2. **The description is data.** A resource is a plain object. Conditions, access rules and filters are JSON (`Where`), and custom inputs and screens are referenced by name. TypeScript types and `validateConfig` check a definition before it ships, and a backend can serve it ([Server-driven config](server-driven-config.md)). API Platform Admin also starts from data, your API's docs, but anything the docs don't describe becomes react-admin code.
+3. **It fits the API you have.** instaui calls your API through your own HTTP client, with your auth headers and interceptors. Parameter names, envelopes and error formats are configured in one place, and fallbacks cover routes your API lacks (no GET-one, no search). react-admin and Refine adapt to an API with data providers too, but filling a missing route is your code. AdminJS and Forest Admin need your database or ORM rather than your API, so they bypass the API's business rules unless you rebuild them.
+
+Because of those three:
+
 - **The people who know the API can build the admin.** Writing a resource description needs no React knowledge ([a guide for backend developers](for-backend-developers.md)). react-admin and Refine expect React developers. The visual builders need no code, but the result lives outside your repository and its review process.
-- **Custom where it matters, standard everywhere else.** You can replace one field's input or display, one view, or a whole screen with your own component, and everything else stays generated.
+- **You customise only where it matters.** You can replace one field's input or display, one view, or a whole screen with your own component, and everything else stays generated.
 - **It lives in your codebase.** instaui is a library: versioned, reviewed and tested with the rest of your code, with no platform or per-user licence.
 
 ## What each one lacks compared with instaui
 
-This is the other half of the picture: what you would build yourself, or give up, with each option. What each does better than instaui is under [When to choose something else](#when-to-choose-something-else).
+This is the other half of the picture: what you would build yourself, or give up, with each option. Most gaps are one of the three above: screens you write per resource, configuration a backend can't serve, or API gaps you fill in code. What each option does better than instaui is under [When to choose something else](#when-to-choose-something-else).
 
 - **react-admin**
   - Every resource needs its own `List`, `Create`, `Edit` and `Show` components. The guessers (`ListGuesser`, `EditGuesser`) only print starting code for you to copy and maintain.
