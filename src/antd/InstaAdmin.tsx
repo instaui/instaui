@@ -6,7 +6,8 @@ import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { Button, Layout, Menu, Result, theme } from 'antd';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { InstaConfigOverride, useInsta } from '../react/context.tsx';
-import { historyAdapter, makeLink } from '../react/router.ts';
+import { useLink } from '../react/link.ts';
+import { historyAdapter } from '../react/router.ts';
 import type { ResourcePaths } from '../react/routes.ts';
 import { ResourceCrud } from './ResourceCrud.tsx';
 
@@ -37,7 +38,7 @@ function AdminShell({ basePath = '', title, paths, slots }: InstaAdminProps) {
   const { token } = theme.useToken();
   const [collapsed, setCollapsed] = useState(false);
   const root = trim(basePath) ? `/${trim(basePath)}` : '';
-  const Link = router.Link ?? makeLink(api);
+  const Link = useLink();
 
   const menuResources = useMemo(
     () =>
@@ -93,7 +94,7 @@ function AdminShell({ basePath = '', title, paths, slots }: InstaAdminProps) {
         >
           <Button
             type="text"
-            aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
+            aria-label={collapsed ? messages.expandMenu : messages.collapseMenu}
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={() => setCollapsed((c) => !c)}
           />

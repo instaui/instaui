@@ -1,6 +1,7 @@
 /** TanStack Query hooks over the DataProvider. No effect depends on app-supplied object identity. */
 import {
   keepPreviousData,
+  useQueries,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -18,26 +19,14 @@ import type {
   ResourceRef,
 } from '../core/data-provider.ts';
 import { recordId } from '../core/data-provider.ts';
-import type { ListState } from '../core/list-state.ts';
+import { listFilterOf, type ListState } from '../core/list-state.ts';
 import { resourceKeys } from '../core/query-keys.ts';
-import type { Where } from '../core/where.ts';
+import { getRecordsByIds } from '../core/lookup.ts';
+import { getPath } from '../core/path.ts';
+import type { NormalizedField } from '../core/resource.ts';
+import { andWhere, type Where } from '../core/where.ts';
 import { useInsta, useResource } from './context.tsx';
-
-const isEmptyWhere = (w: Where | undefined) => !w || Object.keys(w).length === 0;
-
-/** AND-combines non-empty filters. */
-export function andWhere(...filters: (Where | undefined)[]): Where {
-  const present = filters.filter((f): f is Where => !isEmptyWhere(f));
-  return present.length === 0 ? {} : present.length === 1 ? present[0]! : { $and: present };
-}
-
-/** The active tab: the one named by `key`, else the first. */
-export function activeTab<T extends { key: string }>(
-  tabs: readonly T[],
-  key: string | undefined,
-): T | undefined {
-  return tabs.find((t) => t.key === key) ?? tabs[0];
-}
+import { valuesOf } from '../core/value.ts';
 
 export function useResourceList(
   resourceName: string,
@@ -49,11 +38,7 @@ export function useResourceList(
   const params = {
     pagination: { mode: 'offset' as const, page: state.page, pageSize: state.pageSize },
     sort: state.sort,
-    filter: andWhere(
-      resource.list.filter,
-      activeTab(resource.list.tabs, state.tab)?.filter,
-      state.filter,
-    ),
+    filter: listFilterOf(resource, state),
     ...(state.search ? { search: state.search } : {}),
   };
   return useQuery({
@@ -81,31 +66,30 @@ export function useResourceRecord(
   });
 }
 
-/** Fetches records by id: `getMany` when available, else parallel `getOne` (failures skipped). */
-export async function fetchRecordsByIds(
+/**
+ * A records-by-id query (relation labels): records keyed by their id, cached for a minute.
+ * Without a resource it is disabled.
+ */
+function recordsByIdsQuery(
   dataProvider: DataProvider,
-  ref: ResourceRef,
+  ref: ResourceRef | undefined,
   ids: string[],
   ctx: InstaContext,
-  signal?: AbortSignal,
-): Promise<Map<string, AnyRecord>> {
-  const records = dataProvider.getMany
-    ? (await dataProvider.getMany<AnyRecord>({ resource: ref, ctx, ids, signal })).data
-    : await Promise.all(
-        ids.map(async (id) => {
-          try {
-            return (await dataProvider.getOne<AnyRecord>({ resource: ref, ctx, id, signal })).data;
-          } catch {
-            return undefined; // a deleted related record must not break the whole list
-          }
-        }),
-      );
-  const byId = new Map<string, AnyRecord>();
-  for (const r of records) {
-    const rid = r ? recordId(ref, r) : undefined;
-    if (r && rid !== undefined) byId.set(String(rid), r);
-  }
-  return byId;
+) {
+  return {
+    queryKey: resourceKeys.many(ref?.name ?? '', ids, ctx),
+    enabled: ref !== undefined && ids.length > 0,
+    queryFn: async ({ signal }: { signal: AbortSignal }) => {
+      if (!ref) throw new Error('recordsByIdsQuery ran without a resource');
+      const byId = new Map<string, AnyRecord>();
+      for (const r of await getRecordsByIds(dataProvider, { resource: ref, ctx, ids, signal })) {
+        const rid = recordId(ref, r);
+        if (rid !== undefined) byId.set(String(rid), r);
+      }
+      return byId;
+    },
+    staleTime: 60_000,
+  };
 }
 
 /** Records by id (relation labels). */
@@ -113,12 +97,44 @@ export function useRecordsByIds(resourceName: string | undefined, ids: Id[]) {
   const { dataProvider, ctx, resources } = useInsta();
   const resource = resourceName ? resources.get(resourceName) : undefined;
   const unique = useMemo(() => [...new Set(ids.map(String))].sort(), [ids]);
-  return useQuery({
-    queryKey: resourceKeys.many(resourceName ?? '', unique, ctx),
-    queryFn: ({ signal }) => fetchRecordsByIds(dataProvider, resource!.ref, unique, ctx, signal),
-    enabled: resource !== undefined && unique.length > 0,
-    staleTime: 60_000,
+  return useQuery(recordsByIdsQuery(dataProvider, resource?.ref, unique, ctx));
+}
+
+/** Related records for relation cells, one request per related resource per page. */
+export function useRelatedRecords(rows: AnyRecord[], fields: NormalizedField[]) {
+  const { dataProvider, ctx, resources } = useInsta();
+  const requests = useMemo(() => {
+    const byTarget = new Map<string, Set<string>>();
+    for (const field of fields) {
+      const target = field.type === 'relation' ? field.props.resource : undefined;
+      if (!target || !resources.has(target)) continue;
+      for (const row of rows) {
+        const raw = getPath(row, field.key);
+        for (const item of valuesOf(raw)) {
+          if (typeof item === 'object') continue;
+          if (!byTarget.has(target)) byTarget.set(target, new Set());
+          byTarget.get(target)!.add(String(item));
+        }
+      }
+    }
+    return [...byTarget].map(([target, ids]) => ({ target, ids: [...ids].sort() }));
+  }, [fields, rows, resources]);
+
+  // `combine` output is structurally shared by TanStack Query, so it is stable between renders.
+  const datas = useQueries({
+    queries: requests.map(({ target, ids }) => ({
+      ...recordsByIdsQuery(dataProvider, resources.get(target)?.ref, ids, ctx),
+    })),
+    combine: (results) => results.map((r) => r.data),
   });
+  return useMemo(() => {
+    const map = new Map<string, Map<string, AnyRecord>>();
+    requests.forEach(({ target }, i) => {
+      const data = datas[i];
+      if (data) map.set(target, data);
+    });
+    return map;
+  }, [requests, datas]);
 }
 
 export interface RelationOptionsQuery {

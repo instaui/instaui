@@ -1,4 +1,4 @@
-// Type-checks every ```tsx block in docs/*.md against the package source, so docs can't rot.
+// Type-checks every ```tsx block in README.md and docs/*.md against the package source, so docs can't rot.
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -8,11 +8,19 @@ const out = join(root, '.docs-check');
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out);
 
+const pages = [
+  'README.md',
+  ...readdirSync(join(root, 'docs'))
+    .filter((f) => f.endsWith('.md'))
+    .map((f) => join('docs', f)),
+];
+
 let count = 0;
-for (const file of readdirSync(join(root, 'docs')).filter((f) => f.endsWith('.md'))) {
-  const text = readFileSync(join(root, 'docs', file), 'utf8');
+for (const page of pages) {
+  const file = page.replace(/\W+/g, '-'); // README.md -> README-md, docs/x.md -> docs-x-md
+  const text = readFileSync(join(root, page), 'utf8');
   for (const [i, match] of [...text.matchAll(/```tsx\n([\s\S]*?)```/g)].entries()) {
-    writeFileSync(join(out, `${file.replace(/\.md$/, '')}-${i + 1}.tsx`), match[1]);
+    writeFileSync(join(out, `${file}-${i + 1}.tsx`), match[1]);
     count++;
   }
 }

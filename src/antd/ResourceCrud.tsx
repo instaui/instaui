@@ -11,12 +11,17 @@ import { createElement, useCallback, useMemo, useState, type ReactNode } from 'r
 import { recordId, type AnyRecord, type InstaContext } from '../core/data-provider.ts';
 import { errorMessage } from '../core/http-error.ts';
 import { resourceKeys } from '../core/query-keys.ts';
-import { conditionMet } from '../core/resource.ts';
-import type { Where } from '../core/where.ts';
+import { conditionMet, type NormalizedResource } from '../core/resource.ts';
+import { andWhere, type Where } from '../core/where.ts';
 import { InstaConfigOverride, useInsta, useResource, useScopedConfig } from '../react/context.tsx';
-import { andWhere, useResourceList, useResourceRecord } from '../react/data.ts';
+import { useResourceList, useResourceRecord } from '../react/data.ts';
 import { memoryAdapter } from '../react/router.ts';
-import { useResourceRouting, type ResourcePaths } from '../react/routes.ts';
+import {
+  defaultBasePathOf,
+  useResourceRouting,
+  type ResourcePaths,
+  type ResourceRouting,
+} from '../react/routes.ts';
 import { BulkBar } from './crud/BulkBar.tsx';
 import { ListHeader } from './crud/ListHeader.tsx';
 import { useOverrides } from './crud/overrides.ts';
@@ -24,7 +29,7 @@ import { DetailView, FormView } from './crud/RecordViews.tsx';
 import { useActionRunner } from './crud/useActionRunner.tsx';
 import { useSelection } from './crud/useSelection.ts';
 import type { ViewProps } from './crud/viewProps.ts';
-import { useNotify } from './notify.tsx';
+import { useNotify, type Notify } from './notify.tsx';
 import { ResourceTable } from './ResourceTable.tsx';
 
 export type { ViewProps } from './crud/viewProps.ts';
@@ -53,8 +58,6 @@ export interface ResourceCrudProps {
   defaults?: AnyRecord;
 }
 
-const defaultBasePathOf = (name: string) => `/${name}`;
-
 export function ResourceCrud(props: ResourceCrudProps) {
   const outer = useInsta().router.useRouter();
   const base = props.basePath ?? (props.basePathOf ?? defaultBasePathOf)(props.resource);
@@ -68,7 +71,90 @@ export function ResourceCrud(props: ResourceCrudProps) {
   );
 }
 
-function ResourceCrudView({
+type ViewOptions = ResourceCrudProps & { navigate(to: string): void };
+
+function ResourceCrudView(props: ViewOptions) {
+  return useResource(props.resource).kind === 'page' ? (
+    <PageView {...props} />
+  ) : (
+    <CollectionView {...props} />
+  );
+}
+
+/** Refetches everything of this resource. */
+function useRefresh(name: string) {
+  const client = useQueryClient();
+  return useCallback(
+    () => client.invalidateQueries({ queryKey: resourceKeys.all(name) }),
+    [client, name],
+  );
+}
+
+/** What custom views of this resource receive. */
+function useViewProps(
+  resource: NormalizedResource,
+  close: () => void,
+  navigate: (to: string) => void,
+  notify: Notify,
+) {
+  const { dataProvider, ctx } = useInsta();
+  const refresh = useRefresh(resource.name);
+  return (record?: AnyRecord): ViewProps => ({
+    resource,
+    dataProvider,
+    ctx,
+    record,
+    refresh,
+    close,
+    navigate,
+    notify,
+  });
+}
+
+/** A `kind: 'page'` resource: its heading and `components.page`. */
+function PageView({
+  resource: name,
+  basePath,
+  paths,
+  basePathOf = defaultBasePathOf,
+  title,
+  navigate,
+}: ViewOptions) {
+  const resource = useResource(name);
+  const { notify, holder } = useNotify();
+  const routing = useResourceRouting(name, basePath ?? basePathOf(name), paths);
+  const viewProps = useViewProps(resource, routing.close, navigate, notify);
+  const Page = useOverrides(resource)('page');
+  return (
+    <>
+      {holder}
+      {title === false ? null : (
+        <Typography.Title level={4} style={{ marginTop: 0 }}>
+          {title ?? resource.label.other}
+        </Typography.Title>
+      )}
+      {Page ? (
+        createElement(Page, viewProps())
+      ) : (
+        <Result status="warning" title={`${resource.label.one}: no page component`} />
+      )}
+    </>
+  );
+}
+
+/** Whether the open view may be shown: create needs `create`; detail and edit check the record. */
+function viewAllowed(
+  current: ResourceRouting['current'],
+  record: AnyRecord | undefined,
+  can: (action: string, record?: AnyRecord) => boolean,
+) {
+  if (current.view === 'create') return can('create');
+  if (current.view === 'edit' || current.view === 'detail')
+    return !record || can(current.view, record);
+  return true;
+}
+
+function CollectionView({
   resource: name,
   basePath,
   paths,
@@ -78,40 +164,27 @@ function ResourceCrudView({
   filter: scope,
   defaults,
   navigate,
-}: ResourceCrudProps & { navigate(to: string): void }) {
+}: ViewOptions) {
   const resource = useResource(name);
-  const { dataProvider, ctx, messages } = useInsta();
+  const { ctx, messages } = useInsta();
   const { notify, holder } = useNotify();
-  const client = useQueryClient();
   const routing = useResourceRouting(name, basePath ?? basePathOf(name), paths);
   const override = useOverrides(resource);
+  const refresh = useRefresh(name);
+  const viewProps = useViewProps(resource, routing.close, navigate, notify);
   const { current, list } = routing;
 
   const scopedList = useMemo(
     () => (scope ? { ...list, filter: andWhere(list.filter, scope) } : list),
     [list, scope],
   );
-  const listQuery = useResourceList(name, scopedList, { enabled: resource.kind === 'collection' });
+  const listQuery = useResourceList(name, scopedList);
   const id = current.view === 'detail' || current.view === 'edit' ? current.id : undefined;
   const recordQuery = useResourceRecord(name, id);
   const record = recordQuery.data;
   const rows = listQuery.data?.data ?? [];
   const { selection, setSelection, clear } = useSelection(JSON.stringify(scopedList));
 
-  const refresh = useCallback(
-    () => client.invalidateQueries({ queryKey: resourceKeys.all(name) }),
-    [client, name],
-  );
-  const viewProps = (rec?: AnyRecord): ViewProps => ({
-    resource,
-    dataProvider,
-    ctx,
-    record: rec,
-    refresh,
-    close: routing.close,
-    navigate,
-    notify,
-  });
   const runner = useActionRunner({
     resource,
     routing,
@@ -133,25 +206,6 @@ function ResourceCrudView({
   });
   const { can } = runner;
 
-  if (resource.kind === 'page') {
-    const Page = override('page');
-    return (
-      <>
-        {holder}
-        {title === false ? null : (
-          <Typography.Title level={4} style={{ marginTop: 0 }}>
-            {title ?? resource.label.other}
-          </Typography.Title>
-        )}
-        {Page ? (
-          createElement(Page, viewProps())
-        ) : (
-          <Result status="warning" title={`${resource.label.one}: no page component`} />
-        )}
-      </>
-    );
-  }
-
   if (!can('list')) return <Result status="403" title={messages.notAllowed} />;
 
   const canOpenDetail = runner.actions.some((a) => a.key === 'detail') && can('detail');
@@ -162,17 +216,11 @@ function ResourceCrudView({
   const hasRowActions =
     runner.actions.some((a) => a.placement.includes('row')) || RowActions !== undefined;
   const formMode = current.view === 'create' || current.view === 'edit' ? current.view : undefined;
-  const allowed =
-    current.view === 'create'
-      ? can('create')
-      : current.view === 'edit' || current.view === 'detail'
-        ? !record || can(current.view, record)
-        : true;
   const selectable = resource.list.selectable;
   const recordState = {
     record,
     error: recordQuery.isError ? recordQuery.error : undefined,
-    allowed,
+    allowed: viewAllowed(current, record, can),
   };
 
   return (
@@ -219,9 +267,7 @@ function ResourceCrudView({
             ? {
                 keys: selection.keys,
                 onChange: (keys, selected) => setSelection({ keys, rows: selected }),
-                isSelectable: selectable
-                  ? (r) => conditionMet(selectable as never, r as never, ctx, r)
-                  : undefined,
+                isSelectable: selectable ? (r) => conditionMet(selectable, r, ctx, r) : undefined,
               }
             : undefined
         }

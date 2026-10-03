@@ -4,6 +4,7 @@ import { recordId } from './data-provider.ts';
 import { HttpError } from './http-error.ts';
 import { getPath } from './path.ts';
 import { evaluateWhere } from './where.ts';
+import { pageOf } from './value.ts';
 
 export interface MemoryProviderOptions {
   /** Simulated latency in ms (default 0). */
@@ -71,7 +72,7 @@ export function createMemoryProvider(
       const total = rows.length;
       if (params.pagination.mode === 'offset') {
         const { page, pageSize } = params.pagination;
-        rows = rows.slice((page - 1) * pageSize, page * pageSize);
+        rows = pageOf(rows, page, pageSize);
       }
       return { data: clone(rows) as T[], total };
     },

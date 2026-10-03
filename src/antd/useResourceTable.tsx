@@ -5,10 +5,10 @@
 import { useState } from 'react';
 import type { AnyRecord } from '../core/data-provider.ts';
 import type { ListState } from '../core/list-state.ts';
-import type { Where } from '../core/where.ts';
+import { andWhere, type Where } from '../core/where.ts';
 import { useResource } from '../react/context.tsx';
-import { andWhere, useResourceList } from '../react/data.ts';
-import { useResourceRouting } from '../react/routes.ts';
+import { useResourceList } from '../react/data.ts';
+import { defaultBasePathOf, useResourceRouting } from '../react/routes.ts';
 import type { ResourceTableProps } from './ResourceTable.tsx';
 
 export interface UseResourceTableOptions {
@@ -21,8 +21,6 @@ export interface UseResourceTableOptions {
   onRowOpen?(record: AnyRecord): void;
   basePathOf?(resource: string): string;
 }
-
-const defaultBasePathOf = (name: string) => `/${name}`;
 
 export function useResourceTable(name: string, options: UseResourceTableOptions = {}) {
   const resource = useResource(name);

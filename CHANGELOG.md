@@ -3,6 +3,22 @@
 All notable changes to this project are documented here. This project follows [Semantic Versioning](https://semver.org/).
 Note: versions `1.0.2` and `1.0.3` can never be published (npm reserved them from an unrelated 2016 package), so the release after `1.0.1` is `1.1.0`.
 
+## Unreleased
+
+### Breaking
+
+- `messages.close` and `messages.loading` are removed: nothing displayed them.
+
+### Added
+
+- `messages.expandMenu` and `messages.collapseMenu` label `InstaAdmin`'s menu toggle (they were fixed English).
+- Types used by public signatures are exported too: `BaseParams` (data provider calls), `ActionTarget` and `ActionText` (action `confirm` texts), `Notify` (`ViewProps.notify`), `WhereGroup` (part of `Where`) and `ListKeyParams` (`resourceKeys.list`).
+
+### Fixed
+
+- The list search box no longer keeps old text after the search is cleared elsewhere (its chip, "Clear all", a saved view or the browser's Back button).
+- `ctx` on `ResourceCrud`, `openResource` and `RelationSelect` passes values through as given: dates and functions were turned into strings or dropped.
+
 ## 0.0.14
 
 ### Breaking (a smaller, honest API)

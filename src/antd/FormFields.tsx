@@ -3,7 +3,7 @@
  * create/edit form and by action forms, so both behave the same.
  */
 import { Form, type FormInstance, type FormRule as Rule } from 'antd';
-import { codecFor, isEmptyValue } from '../core/codecs.ts';
+import { codecFor, codecIsEmpty } from '../core/codecs.ts';
 import type { AnyRecord } from '../core/data-provider.ts';
 import type { FieldErrors } from '../core/http-error.ts';
 import { conditionMet, type FormMode, type NormalizedField } from '../core/resource.ts';
@@ -51,7 +51,7 @@ export interface FormFieldsProps {
 
 export function FormFields({ fields, mode, form, values, record }: FormFieldsProps) {
   const { ctx, registry, messages } = useInsta();
-  const codecs = registry.codecs as Parameters<typeof codecFor>[1];
+  const codecs = registry.codecs;
 
   const rulesFor = (field: NormalizedField): Rule[] => {
     const codec = codecFor(field.type, codecs);
@@ -62,7 +62,7 @@ export function FormFields({ fields, mode, form, values, record }: FormFieldsPro
     if (required) {
       rules.push({
         validator: (_, v) =>
-          isEmptyValue(codec, v)
+          codecIsEmpty(codec, v)
             ? Promise.reject(new Error(messages.required(field.label)))
             : Promise.resolve(),
       });
@@ -71,8 +71,8 @@ export function FormFields({ fields, mode, form, values, record }: FormFieldsPro
       const validate = field.validate;
       rules.push({
         validator: async (_, v) => {
-          if (isEmptyValue(codec, v)) return; // emptiness is `required`'s job
-          const message = await validate(v, form.getFieldsValue(true) as never);
+          if (codecIsEmpty(codec, v)) return; // emptiness is `required`'s job
+          const message = await validate(v, form.getFieldsValue(true));
           if (message) throw new Error(message);
         },
       });

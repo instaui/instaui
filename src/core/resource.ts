@@ -1,6 +1,8 @@
 /**
  * Resource definitions: one definition drives list, filters, forms, detail, actions and access.
- * Every behaviour slot accepts a JSON form or a code form, so a definition can be served by a backend.
+ * Behaviour slots accept a JSON form (often with a code form too), so a definition can be served by
+ * a backend. Code only: a field's and the form's `validate`, `form.beforeSubmit`,
+ * `form.validatePayload`, `form.confirm`, and an action's `run` and `form.initialValues`.
  */
 import type {
   AnyRecord,

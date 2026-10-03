@@ -3,62 +3,19 @@
  * row actions, keyboard-reachable rows, and batched labels for relation cells.
  */
 import { FilterFilled } from '@ant-design/icons';
-import { useQueries } from '@tanstack/react-query';
 import { Button, Flex, Table, type TableColumnType, type TableProps } from 'antd';
 import { useMemo, useState, type ReactNode } from 'react';
 import type { AnyRecord } from '../core/data-provider.ts';
 import { recordId } from '../core/data-provider.ts';
 import type { ListState } from '../core/list-state.ts';
 import { getPath } from '../core/path.ts';
-import { resourceKeys } from '../core/query-keys.ts';
 import type { NormalizedField, NormalizedResource } from '../core/resource.ts';
 import type { PredicateOps, Where } from '../core/where.ts';
 import { useInsta } from '../react/context.tsx';
-import { fetchRecordsByIds } from '../react/data.ts';
+import { useRelatedRecords } from '../react/data.ts';
 import { RenderEnvContext, type RenderEnv } from './fields/context.ts';
 import { FieldDisplay } from './fields/displays.tsx';
 import { FilterControl } from './fields/filters.tsx';
-
-/** Related records for relation cells, one request per related resource per page. */
-export function useRelatedRecords(rows: AnyRecord[], fields: NormalizedField[]) {
-  const { dataProvider, ctx, resources } = useInsta();
-  const requests = useMemo(() => {
-    const byTarget = new Map<string, Set<string>>();
-    for (const field of fields) {
-      const target = field.type === 'relation' ? field.props.resource : undefined;
-      if (!target || !resources.has(target)) continue;
-      for (const row of rows) {
-        const raw = getPath(row, field.key);
-        for (const item of Array.isArray(raw) ? raw : [raw]) {
-          if (item === undefined || item === null || item === '' || typeof item === 'object')
-            continue;
-          if (!byTarget.has(target)) byTarget.set(target, new Set());
-          byTarget.get(target)!.add(String(item));
-        }
-      }
-    }
-    return [...byTarget].map(([target, ids]) => ({ target, ids: [...ids].sort() }));
-  }, [fields, rows, resources]);
-
-  // `combine` output is structurally shared by TanStack Query, so it is stable between renders.
-  const datas = useQueries({
-    queries: requests.map(({ target, ids }) => ({
-      queryKey: resourceKeys.many(target, ids, ctx),
-      queryFn: ({ signal }: { signal: AbortSignal }) =>
-        fetchRecordsByIds(dataProvider, resources.get(target)!.ref, ids, ctx, signal),
-      staleTime: 60_000,
-    })),
-    combine: (results) => results.map((r) => r.data),
-  });
-  return useMemo(() => {
-    const map = new Map<string, Map<string, AnyRecord>>();
-    requests.forEach(({ target }, i) => {
-      const data = datas[i];
-      if (data) map.set(target, data);
-    });
-    return map;
-  }, [requests, datas]);
-}
 
 export interface ResourceTableProps {
   resource: NormalizedResource;
@@ -95,7 +52,10 @@ export function ResourceTable({
   const { messages } = useInsta();
   const columns = useMemo(() => resource.fields.filter((f) => f.list !== false), [resource.fields]);
   const related = useRelatedRecords(rows, columns);
-  const renderEnv = useMemo<RenderEnv>(() => ({ basePathOf, related }), [basePathOf, related]);
+  const renderEnv = useMemo<RenderEnv>(
+    () => ({ basePathOf, related, Table: ResourceTable }),
+    [basePathOf, related],
+  );
   const filter = list.filter as Filter;
   const rowKey = (r: AnyRecord) => String(recordId(resource.ref, r) ?? JSON.stringify(r));
 

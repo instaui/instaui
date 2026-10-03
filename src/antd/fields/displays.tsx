@@ -8,10 +8,11 @@ import type { ListState } from '../../core/list-state.ts';
 import type { NormalizedField, NormalizedResource } from '../../core/resource.ts';
 import { safeUrl } from '../../core/safe-url.ts';
 import { useInsta } from '../../react/context.tsx';
-import { makeLink } from '../../react/router.ts';
+import { useLink } from '../../react/link.ts';
 import { buildPath } from '../../react/routes.ts';
-import { ResourceTable } from '../ResourceTable.tsx';
+import { antdRegistry } from '../registry.ts';
 import { RenderEnvContext } from './context.ts';
+import { isBlank, pageOf, valuesOf } from '../../core/value.ts';
 
 export interface DisplayProps {
   value: unknown;
@@ -24,7 +25,7 @@ export interface DisplayProps {
 
 function TextDisplay({ value, field }: DisplayProps) {
   const { env, registry } = useInsta();
-  const codecs = registry.codecs as Parameters<typeof codecFor>[1];
+  const codecs = registry.codecs;
   return <>{codecFor(field.type, codecs).toText(value, { ...env, props: field.props })}</>;
 }
 
@@ -45,11 +46,7 @@ function ImageDisplay({ value, field }: DisplayProps) {
 
 function TagDisplay({ value, field }: DisplayProps) {
   const options = field.props.options ?? [];
-  const values = Array.isArray(value)
-    ? value
-    : value === undefined || value === null || value === ''
-      ? []
-      : [value];
+  const values = valuesOf(value);
   return (
     <>
       {values.map((v) => {
@@ -65,29 +62,24 @@ function TagDisplay({ value, field }: DisplayProps) {
 }
 
 function JsonDisplay({ value }: DisplayProps) {
-  if (value === undefined || value === null || value === '') return null;
+  if (isBlank(value)) return null;
   const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
   return <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontSize: 12 }}>{text}</pre>;
 }
 
 function CopyableDisplay({ value }: DisplayProps) {
-  if (value === undefined || value === null || value === '') return null;
+  if (isBlank(value)) return null;
   return <Typography.Text copyable>{String(value)}</Typography.Text>;
 }
 
 function RelationDisplay({ value, field }: DisplayProps) {
-  const { resources, router } = useInsta();
+  const { resources } = useInsta();
   const { basePathOf, related } = useContext(RenderEnvContext);
-  const routerApi = router.useRouter();
+  const Link = useLink();
   const targetName = field.props.resource;
   const target = targetName ? resources.get(targetName) : undefined;
-  const items = Array.isArray(value)
-    ? value
-    : value === undefined || value === null || value === ''
-      ? []
-      : [value];
+  const items = valuesOf(value);
   if (!target) return <>{items.map(String).join(', ')}</>;
-  const Link = router.Link ?? makeLink(routerApi);
   const idField = typeof target.idField === 'string' ? target.idField : 'id';
   return (
     <>
@@ -120,16 +112,15 @@ function RelationDisplay({ value, field }: DisplayProps) {
  */
 function TableDisplay({ value, field }: DisplayProps) {
   const { resources } = useInsta();
-  const { basePathOf } = useContext(RenderEnvContext);
+  const { basePathOf, Table } = useContext(RenderEnvContext);
   const [list, setList] = useState<ListState>({ page: 1, pageSize: 10, sort: [], filter: {} });
   const target = field.props.resource ? resources.get(field.props.resource) : undefined;
   const rows = Array.isArray(value) ? (value as AnyRecord[]) : [];
-  if (!target) return <>{rows.length}</>;
-  const start = (list.page - 1) * list.pageSize;
+  if (!target || !Table) return <>{rows.length}</>;
   return (
-    <ResourceTable
+    <Table
       resource={target}
-      rows={rows.slice(start, start + list.pageSize)}
+      rows={pageOf(rows, list.page, list.pageSize)}
       total={rows.length}
       list={list}
       onListChange={setList}
@@ -162,7 +153,7 @@ export function FieldDisplay(props: DisplayProps): ReactNode {
   const key = typeof custom === 'string' ? custom : defaultDisplayFor(props.field);
   const displays = {
     ...builtinDisplays,
-    ...(registry.displays as Record<string, ComponentType<DisplayProps>> | undefined),
+    ...antdRegistry(registry).displays,
   };
   const Display = displays[key] ?? TextDisplay;
   return <Display {...props} />;

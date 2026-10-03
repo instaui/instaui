@@ -1,5 +1,6 @@
 /** Server validation errors from an axios-style client land on the form fields. */
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
+import { render } from '../../test/render.tsx';
 import { expect, test, vi } from 'vitest';
 import { defineResource } from '../core/resource.ts';
 import { InstaApp } from './InstaApp.tsx';

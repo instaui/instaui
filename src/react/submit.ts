@@ -1,8 +1,9 @@
 /**
  * The submit pipeline, renderer-independent:
- *   form values → resource `form.validate` → encode + diff → `beforeSubmit` → provider → field errors.
- * Validation sees the form values, never the transformed payload, so `beforeSubmit` can't hide
- * a field the validator depends on.
+ *   form values → `form.validate` → encode, diff and `beforeSubmit` → `form.validatePayload`
+ *   → create / update (an edit that changed nothing sends nothing) → field errors.
+ * `validate` sees the form values, so `beforeSubmit` can't hide a field it depends on;
+ * `validatePayload` sees exactly what will be sent.
  */
 import { useCallback } from 'react';
 import { CodecError } from '../core/codecs.ts';
@@ -24,6 +25,9 @@ export function useResourceSubmit(resourceName: string) {
   const resource = useResource(resourceName);
   const { ctx, env, registry, messages } = useInsta();
   const { create, update } = useResourceMutations(resourceName);
+  // The mutation objects change every render; their mutateAsync functions don't.
+  const { mutateAsync: createRecord } = create;
+  const { mutateAsync: updateRecord } = update;
 
   return useCallback(
     async ({
@@ -37,7 +41,7 @@ export function useResourceSubmit(resourceName: string) {
       original?: AnyRecord;
       id?: Id;
     }): Promise<SubmitResult> => {
-      const invalid = await resource.form?.validate?.(values as never, { mode, ctx });
+      const invalid = await resource.form?.validate?.(values, { mode, ctx });
       if (hasErrors(invalid))
         return { ok: false, fieldErrors: invalid, message: messages.formInvalid };
 
@@ -80,12 +84,12 @@ export function useResourceSubmit(resourceName: string) {
 
       try {
         if (mode === 'create') {
-          const res = await create.mutateAsync(payload);
+          const res = await createRecord(payload);
           return { ok: true, data: res.data as AnyRecord | undefined, payload };
         }
         if (id === undefined) throw new Error('Cannot update a record without an id');
         if (Object.keys(payload).length === 0) return { ok: true, payload }; // nothing changed
-        const res = await update.mutateAsync({ id, data: payload, previousData: original });
+        const res = await updateRecord({ id, data: payload, previousData: original });
         return { ok: true, data: res.data as AnyRecord | undefined, payload };
       } catch (error) {
         return {
@@ -95,6 +99,6 @@ export function useResourceSubmit(resourceName: string) {
         };
       }
     },
-    [resource, ctx, env, registry.codecs, messages, create, update],
+    [resource, ctx, env, registry.codecs, messages, createRecord, updateRecord],
   );
 }

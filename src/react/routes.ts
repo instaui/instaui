@@ -7,8 +7,11 @@
  * The list query string travels with every view, so the list behind a record keeps its state.
  */
 import { useCallback, useMemo } from 'react';
-import type { ListState } from '../core/list-state.ts';
+import { listDefaultsOf, type ListState } from '../core/list-state.ts';
 import { useInsta, useResource } from './context.tsx';
+
+/** Where a resource lives when nothing says otherwise: `/{name}`. */
+export const defaultBasePathOf = (name: string) => `/${name}`;
 
 export interface ResourcePaths {
   detail?: string;
@@ -94,22 +97,11 @@ export function useResourceRouting(
   const resource = useResource(resourceName);
   const { router, urlCodec } = useInsta();
   const { location, navigate } = router.useRouter();
-  const codec = urlCodec;
 
-  const defaults = useMemo(
-    () => ({
-      pageSize: resource.list.pageSize,
-      sort: resource.list.sort,
-      fieldTypes: Object.fromEntries(resource.fields.map((f) => [f.key, f.type])),
-      fieldParams: { ...resource.ref.params },
-      fieldParamRanges: { ...resource.ref.paramRanges },
-      defaultTab: resource.list.tabs[0]?.key,
-    }),
-    [resource],
-  );
+  const defaults = useMemo(() => listDefaultsOf(resource), [resource]);
   const list = useMemo(
-    () => codec.parse(location.search, defaults),
-    [codec, location.search, defaults],
+    () => urlCodec.parse(location.search, defaults),
+    [urlCodec, location.search, defaults],
   );
   const current = useMemo(
     () => matchView(location.pathname, base, paths),
@@ -127,11 +119,14 @@ export function useResourceRouting(
     list,
     setList: useCallback(
       (next: ListState) => {
-        navigate(`${buildPath(base, 'list', undefined, paths)}${codec.stringify(next, defaults)}`, {
-          replace: true,
-        });
+        navigate(
+          `${buildPath(base, 'list', undefined, paths)}${urlCodec.stringify(next, defaults)}`,
+          {
+            replace: true,
+          },
+        );
       },
-      [base, paths, navigate, codec, defaults],
+      [base, paths, navigate, urlCodec, defaults],
     ),
     openDetail: useCallback(
       (id: string | number) => navigate(hrefFor('detail', id)),

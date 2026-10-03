@@ -1,5 +1,6 @@
 /** Features for apps migrating from config-driven CRUD forks: tabs, filter bar, ranges, row slots, access functions. */
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { render } from '../../test/render.tsx';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { paramUrlCodec, defaultUrlCodec } from '../core/list-state.ts';
 import { createMemoryProvider } from '../core/memory-provider.ts';
@@ -64,11 +65,11 @@ const seed = () => ({
   ],
 });
 
-function setup(path = '/orders') {
+function setup(path = '/orders', resource = orders) {
   const router = memoryAdapter(path);
   const dataProvider = createMemoryProvider(seed());
   render(
-    <InstaProvider dataProvider={dataProvider} resources={[orders]} router={router}>
+    <InstaProvider dataProvider={dataProvider} resources={[resource]} router={router}>
       <ResourceCrud resource="orders" />
     </InstaProvider>,
   );
@@ -109,6 +110,12 @@ describe('core', () => {
     const url = codec.stringify(state, defaults);
     expect(url).toBe('?totalFrom=5&totalTo=60');
     expect(codec.parse(url, defaults)).toEqual(state);
+    expect(
+      codec.stringify(
+        { ...state, filter: { total: { $between: [1, 2] }, status: { $in: ['A', 'B'] } } },
+        { ...defaults, fieldParams: { status: 'state' } },
+      ),
+    ).toBe('?totalFrom=1&totalTo=2&state%5Bin%5D=A%2CB');
   });
 
   test('tabs round-trip in URLs; the default tab is omitted', () => {
@@ -157,6 +164,18 @@ describe('filter bar', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear all' }));
     await waitFor(() => expect(router.current().search).toBe(''));
     expect(screen.getByText('No filters applied')).toBeTruthy();
+  });
+
+  test('the search box follows the search when it is cleared elsewhere', async () => {
+    const { router } = setup('/orders', { ...orders, list: { ...orders.list, search: true } });
+    const box = await screen.findByRole('searchbox', { name: 'Search' });
+    fireEvent.change(box, { target: { value: 'A-2' } });
+    fireEvent.keyDown(box, { key: 'Enter' });
+    await waitFor(() => expect(router.current().search).toBe('?q=A-2'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear all' }));
+    await waitFor(() => expect(router.current().search).toBe(''));
+    expect(box).toHaveProperty('value', '');
   });
 });
 

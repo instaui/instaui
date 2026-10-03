@@ -6,6 +6,7 @@ export type { CodecContext, CodecEnv, FieldCodec, Timezone } from './core/codecs
 export { withListFallbacks } from './core/lookup.ts';
 export type {
   AnyRecord,
+  BaseParams,
   CustomParams,
   DataProvider,
   HttpMethod,
@@ -31,6 +32,7 @@ export type { ConfigIssue, ValidateOptions } from './core/validate-config.ts';
 export { createMemoryProvider } from './core/memory-provider.ts';
 export type { MemoryProviderOptions } from './core/memory-provider.ts';
 export { resourceKeys } from './core/query-keys.ts';
+export type { ListKeyParams } from './core/query-keys.ts';
 export { defineResource } from './core/resource.ts';
 export type {
   AccessRule,
@@ -59,6 +61,8 @@ export type {
   ActionDefinition,
   ActionForm,
   ActionPlacement,
+  ActionTarget,
+  ActionText,
   BuiltinAction,
   BuiltinActionConfig,
   OpenResourceOptions,
@@ -78,25 +82,21 @@ export type { ApiClientLike } from './core/api-client.ts';
 export type { RestOperation, RestProviderOptions, RestRequest } from './core/rest-provider.ts';
 export { evaluateWhere, toConditions, WhereError } from './core/where.ts';
 export type {
-  Condition as WhereCondition,
+  WhereCondition,
   Operator,
   Predicate,
   PredicateOps,
   VarRef,
   Where,
+  WhereGroup,
   WhereScope,
 } from './core/where.ts';
 
 // ── react ────────────────────────────────────────────────────────────────────
 export { useCan } from './react/access.ts';
 export { InstaProvider, useApiClient, useInsta, useResource } from './react/context.tsx';
-export type {
-  AccessAction,
-  AccessCheck,
-  InstaConfig,
-  InstaProviderProps,
-  InstaRegistry,
-} from './react/context.tsx';
+export type { AccessAction, AccessCheck } from './core/access.ts';
+export type { InstaConfig, InstaProviderProps, InstaRegistry } from './react/context.tsx';
 export {
   useRelationOptions,
   useResourceList,
@@ -132,6 +132,7 @@ export { RelationSelect } from './antd/RelationSelect.tsx';
 export type { RelationSelectProps } from './antd/RelationSelect.tsx';
 export { ResourceCrud } from './antd/ResourceCrud.tsx';
 export type { ResourceCrudProps, ViewProps } from './antd/ResourceCrud.tsx';
+export type { Notify } from './antd/notify.tsx';
 export { ResourceTable } from './antd/ResourceTable.tsx';
 export type { ResourceTableProps } from './antd/ResourceTable.tsx';
 export { useResourceTable } from './antd/useResourceTable.tsx';

@@ -3,9 +3,11 @@ import type { ReactNode } from 'react';
 import { describe, expect, test, vi } from 'vitest';
 import { createMemoryProvider } from '../core/memory-provider.ts';
 import { defineResource } from '../core/resource.ts';
-import { isAllowed, useCan } from './access.ts';
-import { InstaProvider, useResource } from './context.tsx';
+import { isAllowed } from '../core/access.ts';
+import { useCan } from './access.ts';
+import { InstaProvider, useResource, useScopedConfig } from './context.tsx';
 import { useRecordsByIds, useRelationOptions, useResourceList, useResourceRecord } from './data.ts';
+import { useLink } from './link.ts';
 import { createRouterAdapter, memoryAdapter } from './router.ts';
 import { buildPath, matchView, useResourceRouting } from './routes.ts';
 import { useResourceSubmit } from './submit.ts';
@@ -72,6 +74,16 @@ describe('router adapters', () => {
     expect(result.current.location).toEqual({ pathname: '/x', search: '?q=1' });
     result.current.navigate('/y', { replace: true });
     expect(navigate).toHaveBeenCalledWith('/y', { replace: true });
+  });
+});
+
+describe('useLink', () => {
+  test('is the same component every render, so links are not remounted', () => {
+    const { wrapper } = setup();
+    const { result, rerender } = renderHook(() => useLink(), { wrapper });
+    const first = result.current;
+    rerender();
+    expect(result.current).toBe(first);
   });
 });
 
@@ -167,6 +179,33 @@ describe('data hooks', () => {
   });
 });
 
+describe('useScopedConfig', () => {
+  test('keeps ctx values as given and the same config while they are equal', () => {
+    // The provider's own config only stays the same while its props do.
+    const resources = [projects, teams];
+    const dataProvider = createMemoryProvider(seed());
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <InstaProvider dataProvider={dataProvider} resources={resources}>
+        {children}
+      </InstaProvider>
+    );
+    const since = new Date('2026-01-01');
+    const format = (n: number) => `#${n}`;
+    const { result, rerender } = renderHook(({ id }) => useScopedConfig({ id, since, format }), {
+      wrapper,
+      initialProps: { id: 1 },
+    });
+    const first = result.current;
+    expect(first.ctx.since).toBe(since);
+    expect(first.ctx.format).toBe(format);
+    rerender({ id: 1 });
+    expect(result.current).toBe(first);
+    rerender({ id: 2 });
+    expect(result.current.ctx.id).toBe(2);
+    expect(result.current).not.toBe(first);
+  });
+});
+
 describe('access', () => {
   test('resource rules are evaluated against the record and AND-ed with can()', () => {
     const { wrapper } = setup('/projects', ({ action }) => action !== 'create');
@@ -185,6 +224,20 @@ describe('access', () => {
 });
 
 describe('useResourceSubmit', () => {
+  test('is the same function between renders', () => {
+    const resources = [projects, teams];
+    const dataProvider = createMemoryProvider(seed());
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <InstaProvider dataProvider={dataProvider} resources={resources}>
+        {children}
+      </InstaProvider>
+    );
+    const { result, rerender } = renderHook(() => useResourceSubmit('projects'), { wrapper });
+    const first = result.current;
+    rerender();
+    expect(result.current).toBe(first);
+  });
+
   test('validates form values, then sends only the diff and refreshes', async () => {
     const { wrapper, dataProvider } = setup();
     const { result } = renderHook(() => useResourceSubmit('projects'), { wrapper });

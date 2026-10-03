@@ -6,6 +6,7 @@
  * from a server, and neither code evaluation nor user-supplied regular expressions are allowed.
  */
 import { getPath } from './path.ts';
+import { isBlank } from './value.ts';
 
 /** Reference to a value in the evaluation scope: `values.x`, `record.x` or `ctx.x`. */
 export interface VarRef {
@@ -101,8 +102,7 @@ export function resolveVar(ref: VarRef, scope: WhereScope): unknown {
 const operand = (value: unknown, scope: WhereScope) =>
   isVarRef(value) ? resolveVar(value, scope) : value;
 
-const isEmptyValue = (v: unknown) =>
-  v === null || v === undefined || v === '' || (Array.isArray(v) && v.length === 0);
+const isEmpty = (v: unknown) => isBlank(v) || (Array.isArray(v) && v.length === 0);
 
 function comparable(a: unknown, b: unknown): boolean {
   return (
@@ -177,7 +177,7 @@ function testPredicate(predicate: Predicate, actual: unknown, scope: WhereScope)
     checkOperand(op, expected);
     let ok: boolean;
     if (op === '$null') ok = (actual === null || actual === undefined) === expected;
-    else if (op === '$empty') ok = isEmptyValue(actual) === expected;
+    else if (op === '$empty') ok = isEmpty(actual) === expected;
     else if (Array.isArray(actual)) {
       // Array-valued fields match when any element matches; negations require that none match.
       ok =
@@ -215,7 +215,7 @@ export function evaluateWhere(where: Where, scope: WhereScope = {}, target?: unk
 }
 
 /** A flat field condition, as REST encoders usually need. */
-export interface Condition {
+export interface WhereCondition {
   field: string;
   op: Operator;
   value: unknown;
@@ -226,8 +226,8 @@ export interface Condition {
  * `$var` references are resolved against `scope`. Throws `WhereError` for `$or`/`$not`, which a
  * flat query string cannot express; providers that support them should walk the tree themselves.
  */
-export function toConditions(where: Where, scope: WhereScope = {}): Condition[] {
-  const out: Condition[] = [];
+export function toConditions(where: Where, scope: WhereScope = {}): WhereCondition[] {
+  const out: WhereCondition[] = [];
   for (const [key, value] of Object.entries(where)) {
     if (value === undefined) continue;
     if (key === '$and') {
@@ -248,8 +248,53 @@ export function toConditions(where: Where, scope: WhereScope = {}): Condition[] 
   return out;
 }
 
+/** How conditions become query params: renamed params, and fields sent as a from/to pair. */
+export interface ParamNames {
+  params?: Readonly<Record<string, string>>;
+  ranges?: Readonly<Record<string, readonly [string, string]>>;
+}
+
+/**
+ * Flat query params for conditions: `name=value`, `name[op]=value`, and a ranged field's
+ * `$gte` / `$lte` / `$between` as its two params (an absent bound is left out).
+ */
+export function conditionsToParams(
+  conditions: WhereCondition[],
+  { params, ranges }: ParamNames = {},
+): [string, unknown][] {
+  const out: [string, unknown][] = [];
+  for (const { field, op, value } of conditions) {
+    const range = ranges?.[field];
+    if (range && (op === '$gte' || op === '$lte' || op === '$between')) {
+      const [lo, hi] =
+        op === '$between'
+          ? (value as [unknown, unknown])
+          : op === '$gte'
+            ? [value, undefined]
+            : [undefined, value];
+      if (lo !== undefined) out.push([range[0], lo]);
+      if (hi !== undefined) out.push([range[1], hi]);
+      continue;
+    }
+    const name = params?.[field] ?? field;
+    out.push([op === '$eq' ? name : `${name}[${op.slice(1)}]`, value]);
+  }
+  return out;
+}
+
+/** A multi-value param's text: `a,b,c`. Single values are returned as they are. */
+export const joinValues = (v: unknown) => (Array.isArray(v) ? v.map(String).join(',') : v);
+
+const isEmptyWhere = (w: Where | undefined) => !w || Object.keys(w).length === 0;
+
+/** AND-combines non-empty filters. */
+export function andWhere(...filters: (Where | undefined)[]): Where {
+  const present = filters.filter((f): f is Where => !isEmptyWhere(f));
+  return present.length === 0 ? {} : present.length === 1 ? present[0]! : { $and: present };
+}
+
 /** Builds a `Where` from flat conditions (the inverse of `toConditions`). */
-export function fromConditions(conditions: Condition[]): Where {
+export function fromConditions(conditions: WhereCondition[]): Where {
   const where: Record<string, PredicateOps> = {};
   for (const { field, op, value } of conditions) {
     where[field] = { ...where[field], [op]: value };

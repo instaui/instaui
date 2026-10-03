@@ -7,6 +7,7 @@ import dayjs, { type Dayjs } from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat.js';
 import utc from 'dayjs/plugin/utc.js';
 import type { FieldProps, FieldTypeName } from './resource.ts';
+import { isBlank } from './value.ts';
 
 export type Timezone = 'local' | 'utc';
 
@@ -47,7 +48,6 @@ export function setupDayjs(): void {
   dayjsReady = true;
 }
 
-const isBlank = (v: unknown) => v === undefined || v === null || v === '';
 const isDayjs = (v: unknown): v is Dayjs => dayjs.isDayjs(v);
 const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})/;
 
@@ -233,6 +233,6 @@ export function codecFor(
   return registry[type] ?? builtinCodecs.text!;
 }
 
-export function isEmptyValue(codec: FieldCodec, value: unknown): boolean {
+export function codecIsEmpty(codec: FieldCodec, value: unknown): boolean {
   return codec.isEmpty ? codec.isEmpty(value) : isBlank(value);
 }

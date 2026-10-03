@@ -3,6 +3,27 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
+// Every layer gets these; a later block's no-restricted-imports replaces, not merges, so layers spread them.
+const shared = [
+  {
+    group: ['antd/es/*', 'antd/lib/*'],
+    message: "Import antd types from 'antd' only (antd has no exports map).",
+  },
+  {
+    group: ['lodash', 'lodash/*'],
+    message: 'instaui has no runtime dependencies; add a small local helper.',
+  },
+  {
+    group: ['@ant-design/v5-patch-for-react-19'],
+    message: 'Apps install this patch themselves; the library must never import it.',
+  },
+  {
+    group: ['react-router', 'react-router/*'],
+    message:
+      "Never import 'react-router': apps may hoist a different major. Routing goes through injected hooks.",
+  },
+];
+
 export default tseslint.config(
   { ignores: ['dist', 'coverage', 'node_modules', '.yarn', '.docs-check'] },
   js.configs.recommended,
@@ -20,25 +41,7 @@ export default tseslint.config(
       'no-restricted-imports': [
         'error',
         {
-          patterns: [
-            {
-              group: ['antd/es/*', 'antd/lib/*'],
-              message: "Import antd types from 'antd' only (antd has no exports map).",
-            },
-            {
-              group: ['lodash', 'lodash/*'],
-              message: 'instaui has no runtime dependencies; add a small local helper.',
-            },
-            {
-              group: ['@ant-design/v5-patch-for-react-19'],
-              message: 'Apps install this patch themselves; the library must never import it.',
-            },
-            {
-              group: ['react-router', 'react-router/*'],
-              message:
-                "Never import 'react-router': apps may hoist a different major. Routing goes through injected hooks.",
-            },
-          ],
+          patterns: shared,
         },
       ],
     },
@@ -51,6 +54,7 @@ export default tseslint.config(
         'error',
         {
           patterns: [
+            ...shared,
             {
               group: [
                 'react',
@@ -67,6 +71,24 @@ export default tseslint.config(
             {
               group: ['../react/*', '../antd/*', '../components/*'],
               message: 'src/core must not depend on the React or antd layers.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // The React bindings are renderer-free: antd lives in src/antd only.
+    files: ['src/react/**'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            ...shared,
+            {
+              group: ['antd', 'antd/*', '@ant-design/*', '../antd/*'],
+              message: 'src/react must not depend on antd; put renderer code in src/antd.',
             },
           ],
         },

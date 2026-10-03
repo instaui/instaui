@@ -1,5 +1,6 @@
 /** An app from an API client and resource definitions: InstaApp, list fallbacks, related lists. */
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { render } from '../../test/render.tsx';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 import { defineResource, normalizeResource } from '../core/resource.ts';
 import { withListFallbacks } from '../core/lookup.ts';

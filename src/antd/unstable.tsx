@@ -10,6 +10,7 @@ import { useResourceRecord } from '../react/data.ts';
 import { useNotify } from './notify.tsx';
 import { ResourceDetail } from './ResourceDetail.tsx';
 import { ResourceForm } from './ResourceForm.tsx';
+import { defaultBasePathOf } from '../react/routes.ts';
 
 export interface UnstableResourceFormProps {
   resource: string;
@@ -62,7 +63,7 @@ export function UnstableResourceDetail({
   resource: name,
   id,
   record,
-  basePathOf = (n) => `/${n}`,
+  basePathOf = defaultBasePathOf,
 }: UnstableResourceDetailProps) {
   const resource = useResource(name);
   const loaded = useResourceRecord(name, id, { enabled: record === undefined });

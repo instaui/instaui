@@ -12,6 +12,7 @@ import type { Where } from '../core/where.ts';
 import { debounce } from '../utils/debounce.ts';
 import { InstaConfigOverride, useInsta, useResource, useScopedConfig } from '../react/context.tsx';
 import { useRecordsByIds, useRelationOptions } from '../react/data.ts';
+import { valuesOf } from '../core/value.ts';
 
 export interface RelationSelectProps {
   /** Target resource name. */
@@ -34,8 +35,7 @@ export interface RelationSelectProps {
   ctx?: InstaContext;
 }
 
-const asIds = (v: RelationSelectProps['value']): Id[] =>
-  v === undefined || v === null || v === '' ? [] : Array.isArray(v) ? v : [v];
+const asIds = (v: RelationSelectProps['value']): Id[] => valuesOf(v);
 
 /** With `ctx`, the picker's queries use that context too (fills `{ctx.x}` in the target's path). */
 export function RelationSelect({ ctx, ...props }: RelationSelectProps) {

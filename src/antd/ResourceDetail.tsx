@@ -4,10 +4,11 @@ import type { AnyRecord } from '../core/data-provider.ts';
 import { getPath } from '../core/path.ts';
 import { conditionMet, type ContainerOptions, type NormalizedResource } from '../core/resource.ts';
 import { useInsta } from '../react/context.tsx';
+import { useRelatedRecords } from '../react/data.ts';
 import { drawerWidth } from './compat.ts';
 import { RenderEnvContext } from './fields/context.ts';
 import { FieldDisplay } from './fields/displays.tsx';
-import { useRelatedRecords } from './ResourceTable.tsx';
+import { ResourceTable } from './ResourceTable.tsx';
 
 export function ResourceDetail({
   resource,
@@ -26,7 +27,7 @@ export function ResourceDetail({
   const rows = useMemo(() => [record], [record]);
   const related = useRelatedRecords(rows, fields);
   return (
-    <RenderEnvContext.Provider value={{ basePathOf, related }}>
+    <RenderEnvContext.Provider value={{ basePathOf, related, Table: ResourceTable }}>
       <Descriptions
         column={1}
         bordered

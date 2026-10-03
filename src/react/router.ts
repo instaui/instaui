@@ -4,13 +4,7 @@
  *  - `memoryAdapter(initial)`: in-memory, the default for embedded views and tests.
  *  - `createRouterAdapter({ useLocation, useNavigate })`: your app's router (react-router 6/7/8, …).
  */
-import {
-  createElement,
-  useCallback,
-  useSyncExternalStore,
-  type ComponentType,
-  type ReactNode,
-} from 'react';
+import { useCallback, useSyncExternalStore, type ComponentType, type ReactNode } from 'react';
 
 export interface RouterLocation {
   pathname: string;
@@ -159,32 +153,5 @@ export function createRouterAdapter({
       return { location: { pathname, search }, navigate: go };
     },
     Link,
-  };
-}
-
-/** An anchor that navigates client-side through the adapter (keeps open-in-new-tab working). */
-export function makeLink(router: RouterApi): ComponentType<LinkProps> {
-  return function InstaLink({ to, children, className, onClick }: LinkProps) {
-    return createElement(
-      'a',
-      {
-        href: to,
-        className,
-        onClick: (event: MouseEvent & { preventDefault(): void }) => {
-          onClick?.(event);
-          if (
-            event.defaultPrevented ||
-            event.button !== 0 ||
-            event.metaKey ||
-            event.ctrlKey ||
-            event.shiftKey
-          )
-            return;
-          event.preventDefault();
-          router.navigate(to);
-        },
-      },
-      children,
-    );
   };
 }
