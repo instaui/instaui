@@ -3,7 +3,7 @@
 All notable changes to this project are documented here. This project follows [Semantic Versioning](https://semver.org/).
 Note: versions `1.0.2` and `1.0.3` can never be published (npm reserved them from an unrelated 2016 package), so the release after `1.0.1` is `1.1.0`.
 
-## Unreleased
+## 0.0.15
 
 ### Breaking
 
@@ -16,6 +16,7 @@ Note: versions `1.0.2` and `1.0.3` can never be published (npm reserved them fro
 
 ### Fixed
 
+- `api.search: 'client'` searches the whole list, page by page (up to 5,000 rows, in the list's sort order). It only searched the first 100 rows, so matches further down were missing.
 - The list search box no longer keeps old text after the search is cleared elsewhere (its chip, "Clear all", a saved view or the browser's Back button).
 - `ctx` on `ResourceCrud`, `openResource` and `RelationSelect` passes values through as given: dates and functions were turned into strings or dropped.
 

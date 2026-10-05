@@ -1,6 +1,6 @@
 # instaui
 
-> **Status:** `0.0.14`. Pre-1.0, so the API may still change. 0.0.10 and earlier (`ItemCrud`) are deprecated.
+> **Status:** `0.0.15`. Pre-1.0, so the API may still change. 0.0.10 and earlier (`ItemCrud`) are deprecated.
 
 **Turn a REST API into a complete admin app by describing its resources as data: no CRUD screens to write, and no changes to the API.**
 

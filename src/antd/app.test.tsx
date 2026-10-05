@@ -122,17 +122,21 @@ describe('list fallbacks', () => {
     });
   });
 
-  test("search: 'client' filters the first rows and honours the page", async () => {
-    const { provider: p } = provider();
+  test("search: 'client' searches every page and honours the page asked for", async () => {
+    const { provider: p, spy } = provider();
     const page2 = await p.getList(
       params(
         { search: 'client' },
         { search: 'Item 1', pagination: { mode: 'offset', page: 2, pageSize: 5 } },
       ),
     );
-    // Matches in the first 100 rows, in order: 1, 10..19, 100. Page 2 of 5 is 14..18.
-    expect(page2.total).toBe(12);
+    // 130 rows over two pages: 1, 10..19, 100..130 match. Page 2 of 5 is 14..18.
+    expect(page2.total).toBe(42);
     expect(page2.data.map((r) => (r as { id: number }).id)).toEqual([14, 15, 16, 17, 18]);
+    expect(spy.getList).toHaveBeenCalledTimes(2);
+    // A match that only exists on the second page of the API's list is found.
+    const late = await p.getList(params({ search: 'client' }, { search: 'Item 129' }));
+    expect(late.data.map((r) => (r as { id: number }).id)).toEqual([129]);
   });
 });
 

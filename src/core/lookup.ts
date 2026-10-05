@@ -3,7 +3,8 @@
  *  - `lookup: 'list'`: no `GET {path}/{id}`; records are found by id by paging through the list.
  *  - `lookup: { search: 'field' }`: found by searching the list for the id in that field (for
  *    lists that can search an id column, when GET-one is missing or more restricted).
- *  - `search: 'client'`: the list cannot search; typed text filters its first rows here.
+ *  - `search: 'client'`: the list cannot search; typed text filters all of its rows here (paged
+ *    through, up to 5,000, in the list's sort order).
  * `createRestProvider` applies these; wrap another provider with `withListFallbacks`.
  */
 import {
@@ -42,6 +43,7 @@ export async function fetchAll(
     resource: ResourceRef;
     ctx: InstaContext;
     filter?: ListParams['filter'];
+    sort?: ListParams['sort'];
     signal?: AbortSignal;
   },
 ): Promise<AnyRecord[]> {
@@ -52,7 +54,7 @@ export async function fetchAll(
       ctx: params.ctx,
       signal: params.signal,
       filter: params.filter ?? {},
-      sort: [],
+      sort: params.sort ?? [],
       pagination: { mode: 'offset', page, pageSize: LOOKUP_PAGE_SIZE },
     });
     rows.push(...data);
@@ -119,12 +121,9 @@ export function withListFallbacks(base: DataProvider): DataProvider {
     ...base,
     async getList<T>(params: ListParams) {
       if (!params.search || params.resource.api.search !== 'client') return base.getList<T>(params);
-      const { data } = await base.getList<AnyRecord>({
-        ...params,
-        search: undefined,
-        pagination: { mode: 'offset', page: 1, pageSize: LOOKUP_PAGE_SIZE },
-      });
-      const rows = data.filter((row) => matches(row, params.search!));
+      const { resource, ctx, filter, sort, signal } = params;
+      const all = await fetchAll(base, { resource, ctx, filter, sort, signal });
+      const rows = all.filter((row) => matches(row, params.search!));
       if (params.pagination.mode !== 'offset') return { data: rows as T[], total: rows.length };
       const { page, pageSize } = params.pagination;
       return {
