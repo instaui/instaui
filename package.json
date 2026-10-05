@@ -1,6 +1,6 @@
 {
   "name": "instaui",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "Turn a REST API into a complete antd admin app by describing its resources as data: no CRUD screens to write, and no changes to the API.",
   "keywords": [
     "antd",
