@@ -139,11 +139,11 @@ export const makeProvider = (client: ApiClientLike) => fromApiClient(client, { e
 
 Two `api` options cover the usual gaps, for any provider made with `createRestProvider` or `fromApiClient` (wrap other providers with `withListFallbacks`):
 
-| Option                     | Use when                                                                                   | What instaui does                                                                  |
-| -------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
-| `lookup: 'list'`           | There is no `GET {path}/{id}`                                                              | Finds records by id by paging through the list (100 rows a page, up to 5,000 rows) |
-| `lookup: { search: 'id' }` | GET-one is missing or more restricted than the list, but the list can search the id column | Searches the list for the id                                                       |
-| `search: 'client'`         | The list cannot search                                                                     | Filters the first 100 rows by the typed text, in the browser                       |
+| Option                     | Use when                                                                                   | What instaui does                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `lookup: 'list'`           | There is no `GET {path}/{id}`                                                              | Finds records by id by paging through the list (100 rows a page, up to 5,000 rows)                 |
+| `lookup: { search: 'id' }` | GET-one is missing or more restricted than the list, but the list can search the id column | Searches the list for the id                                                                       |
+| `search: 'client'`         | The list cannot search                                                                     | Loads every page of the list (up to 5,000 rows) and filters them by the typed text, in the browser |
 
 Relation labels need one record per id, so they use the same lookup. A provider's own `getMany` is used when it has one and the resource has no `lookup`.
 

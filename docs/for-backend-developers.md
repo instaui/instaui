@@ -147,7 +147,7 @@ export const invoices = defineResource({
     path: 'billing/invoices', // the endpoint is /billing/invoices
     listKey: 'invoices', // lists come back as { data: { invoices: [...] } }
     lookup: 'list', // there is no GET /billing/invoices/:id
-    search: 'client', // the list cannot search: filter what was loaded
+    search: 'client', // the list cannot search: search all of it in the browser
   },
   fields: [{ key: 'number', type: 'text' }],
 });
